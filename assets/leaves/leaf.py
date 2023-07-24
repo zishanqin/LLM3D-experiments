@@ -23,18 +23,37 @@ D = bpy.data
 class LeafFactory(AssetFactory):
     
     scale = 0.3
+    min_radius = .02
 
-    def __init__(self, factory_seed, genome: dict=None, coarse=False):
+    def __init__(self, factory_seed, genome: dict=None, coarse=False, control_dict={}):
         super(LeafFactory, self).__init__(factory_seed, coarse=coarse)
-        self.genome = dict(
-            leaf_width=0.5,
-            alpha=0.3,
-            use_wave=True,
-            x_offset=0,
-            flip_leaf=False,
-            z_scaling=0,
-            width_rand=0.33
-        )
+
+        if 'scale' in control_dict:
+            self.scale = control_dict
+
+        if 'min_radius' in control_dict:
+            self.min_radius = control_dict['min_radius']
+        
+        if 'genome' in control_dict:
+            # Experimental setup
+            # leaf_width = [0.3, 0.5, 0.8, 1]
+            # alpha = [0, 0.25, 0.5, 0.75, 1]
+            # use_wave = [True, False]
+            # x_offset = [0, 1, 2, 3, 4, ] or could be larger (depending on if it's under what units)
+            # flip_leaf = [True, False]
+            # z_scaling = [0, 1, 2]
+            # width_rand = [0, 0.25, 0.33, 0.5]
+            self.genome = control_dict['genome']
+        else:
+            self.genome = dict(
+                leaf_width=0.5,
+                alpha=0.3,
+                use_wave=True,
+                x_offset=0,
+                flip_leaf=False,
+                z_scaling=0,
+                width_rand=0.33
+            )
         if genome:
             for k, g in genome.items():
                 assert k in self.genome
@@ -49,7 +68,7 @@ class LeafFactory(AssetFactory):
         bpy.ops.mesh.edge_face_add()
 
         obj = bpy.context.active_object
-        min_radius = .02
+        min_radius = self.min_radius
         radii_ref = [1]
         n = len(obj.data.vertices) // 2
 
