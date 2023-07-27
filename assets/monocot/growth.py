@@ -31,25 +31,25 @@ from assets.utils.tag import tag_object, tag_nodegroup
 class MonocotGrowthFactory(AssetFactory):
     use_distance = False
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(MonocotGrowthFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.count = 128
-            self.perturb = .05
-            self.angle = np.pi / 6
-            self.min_y_angle = 0.
-            self.max_y_angle = np.pi / 2
-            self.leaf_prob = uniform(.8, .9)
-            self.leaf_range = 0, 1
-            self.stem_offset = .2
-            self.scale_curve = [(0, 1), (1, 1)]
-            self.radius = .01
-            self.bend_angle = np.pi / 4
-            self.twist_angle = np.pi / 6
-            self.z_drag = 0.
-            self.z_scale = uniform(1., 1.2)
-            self.align_factor = 0
-            self.align_direction = 1, 0, 0
+            self.count = control_dict.get('count', 128) # 32, 64, 128
+            self.perturb = control_dict.get('perturb', .05) # 0, .05, .1
+            self.angle = control_dict.get('angle', np.pi / 6) # pi/6, pi/3
+            self.min_y_angle = control_dict.get('min_y_angle', 0.) # 0, .1
+            self.max_y_angle = control_dict.get('max_y_angle', np.pi / 2) #pi/2, pi
+            self.leaf_prob = control_dict.get('leaf_prob', uniform(.8, .9)) # .8, .85, .9
+            self.leaf_range = control_dict.get('leaf_range', (0, 1)) # (0,1), (1,2)
+            self.stem_offset = control_dict.get('stem_offset', .2) # .1, .2, .3
+            self.scale_curve = control_dict.get('scale_curve', [(0, 1), (1, 1)]) 
+            self.radius = control_dict.get('radius', .01) # .01, .05, .1
+            self.bend_angle = control_dict.get('bend_angle', np.pi / 4) # pi/2, pi/4, pi
+            self.twist_angle = control_dict.get('twist_angle', np.pi / 6) # pi/6, pi/5, pi/4, pi/3, pi/2, pi
+            self.z_drag = control_dict.get('z_drag', 0.) # 0, 1, 2
+            self.z_scale = control_dict.get('z_scale', uniform(1., 1.2)) # 1, 1.1, 1.2
+            self.align_factor = control_dict.get('align_factor', 0) # 0, 1
+            self.align_direction = control_dict.get('align_direction', (1, 0, 0)) # (1,0,0), (0,1,0), (0,0,1)
             self.base_hue = self.build_base_hue()
             self.bright_color = *colorsys.hsv_to_rgb(self.base_hue, uniform(.6, .8), log_uniform(.05, .1)), 1
             self.dark_color = *colorsys.hsv_to_rgb((self.base_hue + uniform(-.03, .03)) % 1, uniform(.8, 1.),

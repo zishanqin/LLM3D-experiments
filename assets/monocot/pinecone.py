@@ -23,7 +23,7 @@ from util.math import FixedSeed
 from assets.utils.tag import tag_object, tag_nodegroup
 
 class PineconeFactory(MonocotGrowthFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.angle = 2 * np.pi / (np.random.randint(4, 8) + .5)

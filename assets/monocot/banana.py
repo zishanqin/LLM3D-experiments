@@ -22,21 +22,87 @@ from assets.utils.tag import tag_object, tag_nodegroup
 class BananaMonocotFactory(MonocotGrowthFactory):
 
     def __init__(self, factory_seed, coarse=False):
-        super(BananaMonocotFactory, self).__init__(factory_seed, coarse)
+        super(BananaMonocotFactory, self).__init__(factory_seed, coarse, control_dict={})
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.6, 1.)
-            self.angle = uniform(np.pi / 4, np.pi / 3)
-            self.z_scale = uniform(1, 1.5)
-            self.z_drag = uniform(.1, .2)
-            self.min_y_angle = uniform(np.pi * .05, np.pi * .1)
-            self.max_y_angle = uniform(np.pi * .25, np.pi * .45)
-            self.leaf_range = uniform(.5, .7), 1
-            self.count = int(log_uniform(16, 24))
-            self.scale_curve = [(0, uniform(.4, 1.)), (1, uniform(.6, 1.))]
-            self.radius = uniform(.04, .06)
-            self.bud_angle = uniform(np.pi / 8, np.pi / 6)
-            self.cut_angle = self.bud_angle + uniform(np.pi / 20, np.pi / 12)
-            self.freq = log_uniform(100, 300)
+            if 'stem_offset' in control_dict:
+                # 0.5, 0.6, 0.7, 0.8, 0.9, 1
+                self.stem_offset = control_dict['stem_offset']
+            else:
+                self.stem_offset = uniform(.6, 1.)
+
+            if 'angle' in control_dict:
+                # np.pi/4, np.pi/3
+                self.angle = control_dict['angle']
+            else:
+                self.angle = uniform(np.pi / 4, np.pi / 3)
+
+            if 'z_scale' in control_dict:
+                # 0.1, 0.2, 0.3, 0.4, 0.5
+                self.z_scale = control_dict['z_scale']
+            else:
+                self.z_scale = uniform(1, 1.5)
+
+            if 'z_drag' in control_dict:
+                # 0.1, 0.15, 0.2
+                self.z_drag = control_dict['z_drag']
+            else:
+                self.z_drag = uniform(.1, .2)
+    
+            if 'min_y_angle' in control_dict:
+                # 0.05pi, 0.1pi
+                self.min_y_angle = control_dict['min_y_angle']
+            else:
+                self.min_y_angle = uniform(np.pi * .05, np.pi * .1)
+
+            if 'max_y_angle' in control_dict:
+                # 0.25pi, 0.3pi, 0.35pi, 0.4pi, 0.45pi
+                self.max_y_angle = control_dict['max_y_angle']
+            else:
+                self.max_y_angle = uniform(np.pi * .25, np.pi * .45)
+            
+            if 'min_leaf_range' in control_dict:
+                # 0.5, 0.6, 0.7
+                self.leaf_range = control_dict['min_leaf_range'], 1
+            else:
+                self.leaf_range = uniform(.5, .7), 1
+
+            if 'count' in control_dict:
+                # 4, 5
+                self.count = control_dict['count']
+            else:
+                self.count = int(log_uniform(16, 24))
+            
+            self.scale_curve = [(0, uniform(.8, 1.)), (.5, 1), (1, uniform(.6, 1.))]
+
+            if 'bud_angle' in control_dict:
+                # pi/8, pi/6, pi/4
+                self.bud_angle = control_dict['bud_angle']
+            else:
+                self.bud_angle = uniform(np.pi / 8, np.pi / 6)
+            
+            if 'cut_angle' in control_dict:
+                self.cut_angle = control_dict['cut_angle']
+            else:
+                self.cut_angle = self.bud_angle + uniform(np.pi / 20, np.pi / 12)
+
+            if 'scale_curve' in control_dict:
+                # [(0, 0.4, 0.6)], where the second and third elements can be chosen to increase by 0.1 each time
+                self.scale_curve = control_dict['scale_curve']
+            else:
+                self.scale_curve = [(0, uniform(.4, 1.)), (1, uniform(.6, 1.))]
+
+            if 'radius' in control_dict:
+                # .04, .05, .06
+                self.radius = control_dict['radius']
+            else:
+                self.radius = uniform(.04, .06)
+            
+            if 'freq' in control_dict:
+                # 6, 7, 8
+                self.freq = control_dict['freq']
+            else:
+                self.freq = log_uniform(100, 300)
+
             self.n_cuts = np.random.randint(6, 10) if uniform(0, 1) < .8 else 0
 
     @staticmethod
@@ -100,18 +166,19 @@ class BananaMonocotFactory(MonocotGrowthFactory):
 
 
 class TaroMonocotFactory(BananaMonocotFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(TaroMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.05, .1)
-            self.radius = uniform(.02, .04)
-            self.z_drag = uniform(.2, .3)
-            self.bud_angle = uniform(np.pi * .6, np.pi * .7)
-            self.freq = log_uniform(10, 20)
-            self.count = int(log_uniform(12, 16))
-            self.n_cuts = np.random.randint(1, 2) if uniform(0, 1) < .5 else 0
-            self.min_y_angle = uniform(-np.pi * .25, -np.pi * .05)
-            self.max_y_angle = uniform(-np.pi * .05, 0)
+            # Experiments
+            self.stem_offset = control_dict.get('stem_offset', uniform(.05, .1)) # .05, .06, .07, .08, .09, .1
+            self.radius = control_dict.get('radius', uniform(.02, .04)) # .02, .03, .04
+            self.z_drag = control_dict.get('z_drag', uniform(.2, .3)) # .2, .25, .3
+            self.bud_angle = control_dict.get('bud_angle', uniform(np.pi * .6, np.pi * .7)) # .5pi, .6pi, .7pi
+            self.freq = control_dict.get('freq', log_uniform(10, 20)) # 3, 4, 5
+            self.count = control_dict.get('count', int(log_uniform(12, 16))) # 2, 3
+            self.n_cuts = control_dict.get('n_cuts', np.random.randint(1, 2) if uniform(0, 1) < .5 else 0) # 0, 1, 2
+            self.min_y_angle = control_dict.get('min_y_angle', uniform(-np.pi * .25, -np.pi * .05)) # -.25pi, -.2pi, -.15pi, -.1pi, -.05pi 
+            self.max_y_angle = control_dict.get('max_y_angle', uniform(-np.pi * .05, 0)) # -pi/2, -pi/3, -pi/4, 0
 
     def displace_veins(self, obj):
         vg = obj.vertex_groups.new(name='distance')

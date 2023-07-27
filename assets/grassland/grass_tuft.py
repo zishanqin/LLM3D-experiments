@@ -46,9 +46,19 @@ class GrassTuftFactory(AssetFactory):
             self.fac_info['base_spread'] = uniform(0, self.fac_info['length_mean'] / 4)
             self.fac_info['base_angle_var'] = uniform(0, 15)
 
-            properties = ['n_seg', 'length_mean', 'length_std', 
-            'curl_mean', 'curl_std', 'curl_power', 'blade_width_pct_mean', 'blade_width_var',
-            'taper_var', 'base_spread', 'base_angle_var']
+            properties = [
+                'n_seg', # 1, 2, 3, 4, 5
+                'length_mean', # 0.05, 0.10, 0.15, 0.20
+                'length_std', # 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1
+                'curl_mean', # 10, 20, 30, 40, 50, 60, 70
+                'curl_std', # 3, 4, 5, 6, 7
+                'curl_power', # 0.8, 1, 1.2, 1.4, 1.6
+                'blade_width_pct_mean', # 0.01, 0.02, 0.03
+                'blade_width_var', # 0, 0.01, 0.02, 0.03, 0.04, 0.05
+                'taper_var', # 0, 0.05, 0.1
+                'base_spread', # 0, 0.01, 0.05, 0.1, 0.15, 0.2
+                'base_angle_var' # 0, 5, 10, 15
+                ]
             for p in properties:
                 if p in control_dict:
                     self.fac_info[p] = control_dict[p]

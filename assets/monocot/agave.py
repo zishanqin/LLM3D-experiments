@@ -23,18 +23,53 @@ from assets.utils.tag import tag_object, tag_nodegroup
 class AgaveMonocotFactory(MonocotGrowthFactory):
     use_distance = True
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(AgaveMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.0, .5)
-            self.angle = uniform(np.pi / 9, np.pi / 6)
-            self.z_drag = uniform(.05, .1)
-            self.min_y_angle = uniform(np.pi * .1, np.pi * .15)
-            self.max_y_angle = uniform(np.pi * .4, np.pi * .52)
-            self.count = int(log_uniform(32, 64))
+            if 'stem_offset' in control_dict:
+                # 0, 0.25, 0.5
+                self.stem_offset = control_dict['stem_offset']
+            else:
+                self.stem_offset = uniform(.0, .5)
+
+            if 'angle' in control_dict:
+                # np.pi/9, np.pi/6
+                self.angle = control_dict['angle']
+            else:
+                self.angle = uniform(np.pi / 9, np.pi / 6)
+
+            if 'z_drag' in control_dict:
+                # 0.05, 0.06, 0.07, 0.08, 0.09, 0.1
+                self.z_drag = control_dict['z_drag']
+            else:
+                self.z_drag = uniform(.05, .1)
+    
+            if 'min_y_angle' in control_dict:
+                # 0.1pi, 0.15pi
+                self.min_y_angle = control_dict['min_y_angle']
+            else:
+                self.min_y_angle = uniform(np.pi * .1, np.pi * .15)
+
+            if 'max_y_angle' in control_dict:
+                # 0.4pi, 0.5pi
+                self.max_y_angle = control_dict['max_y_angle']
+            else:
+                self.max_y_angle = uniform(np.pi * .4, np.pi * .52)
+            
+            if 'count' in control_dict:
+                # 4, 5, 6
+                self.count = control_dict['count']
+            else:
+                self.count = int(log_uniform(32, 64))
+            
             self.scale_curve = [(0, uniform(.8, 1.)), (.5, 1), (1, uniform(.6, 1.))]
 
-            self.bud_angle = uniform(np.pi / 8, np.pi / 4)
+            if 'bud_angle' in control_dict:
+                # pi/8, pi/6, pi/4
+                self.bud_angle = control_dict['bud_angle']
+            else:
+                self.bud_angle = uniform(np.pi / 8, np.pi / 4)
+                
             self.cut_prob = 0 if uniform(0, 1) < .5 else uniform(.2, .4)
 
     @staticmethod

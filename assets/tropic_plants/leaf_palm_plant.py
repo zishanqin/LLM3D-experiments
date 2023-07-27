@@ -502,8 +502,65 @@ def geometry_plant_nodes(nw: NodeWrangler, **kwargs):
 
 
 class LeafPalmPlantFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(LeafPalmPlantFactory, self).__init__(factory_seed, coarse=coarse)
+        self.params = {}
+        if 'mode' in control_dict:
+            # flat, s
+            self.params['leaf_h_wave_control_points'] = self.get_h_wave_contour(control_dict['mode'])
+        else:
+            mode = np.random.choice(['flat', 's'], p=[0.7, 0.3])
+            self.params['leaf_h_wave_control_points'] = self.get_h_wave_contour(mode)
+
+        if 'leaf_h_wave_scale' in control_dict:
+            # 0.01, 0.05, 0.10, 0.15
+            self.params['leaf_h_wave_scale'] = control_dict['leaf_h_wave_scale']
+        else:
+            self.params['leaf_h_wave_scale'] = uniform(0.01, 0.15)
+
+        
+        if 'leaf_x_curvature' in control_dict:
+            # 0.0, 0.1, 0.2, 0.3, 0.4, 0.5
+            self.params['leaf_x_curvature'] = control_dict['leaf_x_curvature']
+        else:
+            self.params['leaf_x_curvature'] = uniform(0.0, 0.5)
+
+        if 'stem_x_curvature' in control_dict:
+            # -0.1, 0.0 ,0.1, 0.2, 0.3, 0.4
+            self.params['stem_x_curvature'] = control_dict['stem_x_curvature']
+        else:
+            self.params['stem_x_curvature'] = uniform(-0.1, 0.4)
+
+        if 'stem_y_curvature' in control_dict:
+            # -0.15, 0, 0.15
+            self.params['stem_y_curvature'] = control_dict['stem_y_curvature']
+        else:
+            self.params['stem_y_curvature'] = uniform(-0.15, 0.15)
+
+        if 'plant_translation' in control_dict:
+            # try with (0, 0, 0) and those coordinates with offset = 1
+            self.params['plant_translation'] = control_dict['plant_translation']
+        else:
+            self.params['plant_translation'] = (0.0, 0.0, 0.0)
+
+        if 'plant_z_rotate' in control_dict:
+            # -0.4, -0.2, 0, 0.2, 0.4
+            self.params['plant_z_rotate'] = control_dict['plant_z_rotate']
+        else:
+            self.params['plant_z_rotate'] = uniform(-0.4, 0.4)
+        
+        if 'plant_stem_length' in control_dict:
+            # 1.5, 2, 2.5
+            self.params['plant_stem_length'] = control_dict['plant_stem_length']
+        else:
+            self.params['plant_stem_length'] = uniform(1.5, 2.2)
+
+        if 'plant_scale' in control_dicte:
+            # (0,0,0), (0.5, 0.5, 0.5), (1,1,1), (1.5, 1.5, 1.5)
+            self.params['plant_scale'] = control_dicte['plant_scale']
+        else:
+            s = uniform(0.8, 1.3)
+            self.params['plant_scale'] = (s, s, s)
 
     def get_h_wave_contour(self, mode):
         if mode == 'flat':
@@ -543,10 +600,10 @@ class LeafPalmPlantFactory(AssetFactory):
             size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
-        params = self.update_params(params)
+        # params = self.update_params(params)
         surface.add_geomod(obj, geometry_plant_nodes, apply=False,
                            attributes=['Attribute', 'Coordinate',
-                                       'subvein offset', 'vein'], input_kwargs=params)
+                                       'subvein offset', 'vein'], input_kwargs=self.params)
         surface.add_material(obj, shader_leaf_material, selection=None)
 
         return obj

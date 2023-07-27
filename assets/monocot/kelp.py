@@ -24,27 +24,34 @@ class KelpMonocotFactory(MonocotGrowthFactory):
     max_leaf_length = 1.2
     align_angle = uniform(np.pi / 24, np.pi / 12)
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(KelpMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = 10.
-            self.angle = uniform(np.pi / 6, np.pi / 4)
-            self.z_drag = uniform(.0, .2)
-            self.min_y_angle = uniform(0, np.pi * .1)
-            self.max_y_angle = self.min_y_angle
-            self.bend_angle = uniform(0, np.pi / 6)
-            self.twist_angle = uniform(0, np.pi / 6)
-            self.count = 512
-            self.leaf_prob = uniform(.6, .7)
-            self.align_angle = uniform(np.pi / 30, np.pi / 15)
-            self.radius = .02
+            self.stem_offset = control_dict.get('stem_offset', 10.) # 0, 10
+            self.angle = control_dict.get('angle', uniform(np.pi / 6, np.pi / 4)) # pi/6, pi/5, pi/4
+            self.z_drag = control_dict.get('z_drag', uniform(.0, .2)) # 0, .1, .2
+            self.min_y_angle = control_dict.get('min_y_angle', uniform(0, np.pi * .1)) # 0, .1pi 
+            self.max_y_angle = control_dict.get('max_y_angle', self.min_y_angle) # 0, .1pi
+            self.bend_angle = control_dict.get('bend_angle', uniform(0, np.pi / 6)) # 0, pi/6, pi
+            self.twist_angle = control_dict.get('twist_angle', uniform(0, np.pi / 6)) # 0, pi/6, pi
+            self.count = control_dict.get('count', 512) # 128, 256, 512
+            self.leaf_prob = control_dict.get('leaf_prob', uniform(.6, .7)) # .6, .7
+            self.align_angle = control_dict.get('align_angle', uniform(np.pi / 30, np.pi / 15)) # pi/30, pi/25, pi/20, pi/15
+            self.radius = control_dict.get('radius', .02) # .02, .05, .1
             self.align_factor = self.make_align_factor()
             self.align_direction = self.make_align_direction()
+
             flow_angle = uniform(0, np.pi * 2)
-            self.align_direction = np.cos(flow_angle), np.sin(flow_angle), uniform(-.2, .2)
-            self.anim_freq = 1 / log_uniform(100, 200)
-            self.anim_offset = uniform(0, 1)
-            self.anim_seed = np.random.randint(1e5)
+            self.align_direction = (
+                control_dict.get('align_direction_x', np.cos(flow_angle)),
+                control_dict.get('align_direction_y', np.sin(flow_angle)),
+                control_dict.get('align_direction_z', uniform(-.2, .2))
+            )
+
+            self.anim_freq = control_dict.get('anim_freq', 1 / log_uniform(100, 200)) # 1/100, 1/200
+            self.anim_offset = control_dict.get('anim_offset', uniform(0, 1)) # 0, 0.5, 1
+            self.anim_seed = control_dict.get('anim_seed', np.random.randint(1e5))
+
 
     def make_align_factor(self):
         def align_factor(nw: NodeWrangler):

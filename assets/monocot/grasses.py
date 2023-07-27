@@ -71,15 +71,53 @@ class GrassesMonocotFactory(MonocotGrowthFactory):
 class WheatEarMonocotFactory(MonocotGrowthFactory):
 
     def __init__(self, factory_seed, coarse=False):
-        super(WheatEarMonocotFactory, self).__init__(factory_seed, coarse)
+        super(WheatEarMonocotFactory, self).__init__(factory_seed, coarse, control_dict={})
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.4, .5)
-            self.angle = uniform(np.pi / 6, np.pi / 4)
-            self.min_y_angle = uniform(np.pi / 4, np.pi / 3)
-            self.max_y_angle = np.pi / 2
-            self.leaf_prob = uniform(.9, 1)
-            self.count = int(log_uniform(96, 128))
-            self.bend_angle = np.pi
+            if 'stem_offset' in control_dict:
+                # 0.4, 0.45, 0.5
+                self.stem_offset = control_dict['stem_offset']
+            else:
+                self.stem_offset = uniform(.4, .5)
+
+            if 'angle' in control_dict:
+                # np.pi/6, np.pi/5, np.pi/4
+                self.angle = control_dict['angle']
+            else:
+                self.angle = uniform(np.pi / 6, np.pi / 4)
+
+    
+            if 'min_y_angle' in control_dict:
+                # pi/4, pi/3
+                self.min_y_angle = control_dict['min_y_angle']
+            else:
+                self.min_y_angle = uniform(np.pi /4, np.pi /3)
+
+            if 'max_y_angle' in control_dict:
+                # pi/3, pi/2, pi
+                self.max_y_angle = control_dict['max_y_angle']
+            else:
+                self.max_y_angle = np.pi/2
+            
+            if 'leaf_prob' in control_dict:
+                # .5, .7, .9, 1
+                self.leaf_prob = control_dict['leaf_prob']
+            else:
+                self.leaf_prob = uniform(.9, 1)
+
+            if 'count' in control_dict:
+                # 6, 7
+                self.count = control_dict['count']
+            else:
+                self.count = int(log_uniform(96, 128))
+            
+            self.scale_curve = [(0, uniform(.8, 1.)), (.5, 1), (1, uniform(.6, 1.))]
+
+            if 'bend_angle' in control_dict:
+                # pi/2, pi
+                self.bend_angle = control_dict['bend_angle']
+            else:
+                self.bend_angle = np.pi
+            
 
     @staticmethod
     def build_base_hue():
@@ -103,11 +141,14 @@ class WheatEarMonocotFactory(MonocotGrowthFactory):
 
 class WheatMonocotFactory(GrassesMonocotFactory):
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(WheatMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.ear_factory = WheatEarMonocotFactory(factory_seed, coarse)
-            self.scale_curve = [(0, 1.), (1, .6)]
+            if 'scale_curve' in control_dict:
+                self.scale_curve = control_dict['scale_curve']
+            else:
+                self.scale_curve = [(0, 1.), (1, .6)]
             self.leaf_range = .1, .7
 
     @staticmethod
@@ -128,12 +169,12 @@ class WheatMonocotFactory(GrassesMonocotFactory):
 
 class MaizeMonocotFactory(GrassesMonocotFactory):
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(MaizeMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(2., 2.5)
-            self.scale_curve = [(0, 1.), (1, .6)]
-            self.leaf_range = .1, .7
+            self.stem_offset = control_dict.get('stem_offset', uniform(2., 2.5)) # 2, 2.1, 2.2, 2.3, 2.4, 2.5
+            self.scale_curve = control_dict.get('scale_curve', [(0, 1.), (1, .6)]) # [(0, 1.), (1, .6)] increase then decrease; 1 can be replaced as .7, .8, .9
+            self.leaf_range = control_dict.get('leaf_range', (0.1, 0.7)) # .1, .2, .3, .4, .5, .6, .7
 
     def build_leaf(self, face_size):
         super().build_leaf(face_size)
@@ -168,14 +209,15 @@ class MaizeMonocotFactory(GrassesMonocotFactory):
 
 class ReedEarMonocotFactory(MonocotGrowthFactory):
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(ReedEarMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.3, .4)
-            self.min_y_angle = uniform(np.pi / 4, np.pi / 3)
-            self.max_y_angle = self.min_y_angle + np.pi / 12
-            self.count = int(log_uniform(48, 96))
-            self.radius = .002
+            self.stem_offset = control_dict.get('stem_offset', uniform(.3, .4)) # .3, .35, .4
+            self.min_y_angle = control_dict.get('min_y_angle', uniform(np.pi / 4, np.pi / 3)) # pi/4, pi/3
+            self.max_y_angle = control_dict.get('max_y_angle', self.min_y_angle + np.pi / 12) 
+            self.count = control_dict.get('count', int(log_uniform(48, 96))) # 5, 6, 7
+            self.radius = control_dict.get('radius', .002) # .002, .1, .5, 1
+
 
     def build_leaf(self, face_size):
         x_anchors = np.array([0, uniform(.02, .03), .05])
@@ -196,13 +238,14 @@ class ReedBranchMonocotFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False):
         super(ReedBranchMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.6, .8)
+            self.stem_offset = control_dict.get('stem_offset', uniform(.6, .8)) #.6, .7, .8
             self.branch_factory = ReedEarMonocotFactory(self.factory_seed)
-            self.scale_curve = (0, 1), (.5, .6), (1, .1)
-            self.min_y_angle = uniform(-np.pi / 10, -np.pi / 8)
-            self.max_y_angle = uniform(-np.pi / 6, -np.pi / 8)
-            self.angle = 0
-            self.radius = .005
+            self.scale_curve = control_dict.get('scale_curve', [(0, 1), (.5, .6), (1, .1)]) # [(0, 1), (.5, 0.8), (1, 0.5)], [(0, 0.8), (.5, 0.7), (1, 0.4)]
+            self.min_y_angle = control_dict.get('min_y_angle', uniform(-np.pi / 10, -np.pi / 8)) # -pi/10, -pi/9, -pi/8
+            self.max_y_angle = control_dict.get('max_y_angle', uniform(-np.pi / 6, -np.pi / 8)) # -pi/6, -pi/7, -pi/8
+            self.angle = control_dict.get('angle', 0) # 0, 15, 30, 45, 60
+            self.radius = control_dict.get('radius', .005) # 0, .005, .01
+
 
     def make_collection(self, face_size):
         return make_asset_collection(self.branch_factory.create_raw, 2, 'leaves', verbose=False,
@@ -213,8 +256,8 @@ class ReedMonocotFactory(GrassesMonocotFactory):
     def __init__(self, factory_seed, coarse=False):
         super(ReedMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(3., 4.)
-            self.scale_curve = [(0, 1.2), (1, .8)]
+            self.stem_offset = control_dict.get('stem_offset', uniform(3., 4.)) # 3, 3.5, 4
+            self.scale_curve = control_dict.get('scale_curve', [(0, 1.2), (1, .8)]) 
             self.branch_factory = ReedBranchMonocotFactory(factory_seed, coarse)
             self.branch_material = shaderfunc_to_material(self.shader_ear)
 
