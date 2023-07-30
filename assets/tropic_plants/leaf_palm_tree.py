@@ -593,7 +593,7 @@ def geometry_palm_tree_leaf_nodes(nw: NodeWrangler, **kwargs):
 class LeafPalmTreeFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(LeafPalmTreeFactory, self).__init__(factory_seed, coarse=coarse, control_dict={})
-                self.params = {}
+        self.params = {}
         if 'mode' in control_dict:
             # flat, s
             self.params['leaf_h_wave_control_points'] = self.get_h_wave_contour(control_dict['mode'])

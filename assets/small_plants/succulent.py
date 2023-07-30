@@ -14,7 +14,7 @@ from surfaces import surface
 from surfaces.templates import succulent
 from placement.factory import AssetFactory
 import numpy as np
-
+from util.math import FixedSeed
 from util import blender as butil
 from assets.utils.tag import tag_object, tag_nodegroup
 
@@ -408,104 +408,116 @@ def geometry_succulent_nodes(nw: NodeWrangler, **kwargs):
 
 
 class SucculentFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control=False, control_dict={}):
         super(SucculentFactory, self).__init__(factory_seed, coarse=coarse)
-        self.mode = np.random.choice(["thin_pedal", "thick_pedal"], p=[0.65, 0.35])
+        self.factory_seed = factory_seed
+        if 'mode' in control_dict:
+            # "thin_pedal", "thick_pedal"
+            self.mode = control_dict['mode']
+        else:
+            self.mode = np.random.choice(["thin_pedal", "thick_pedal"], p=[0.65, 0.35])
+
+        self.specific_configs = control_dict.get('specific_configs',{})
 
     def get_params(self, mode):
-        if mode == 'thin_pedal':
-            params = {}
-            params["cross_y_bottom"] = uniform(0.08, 0.25)
-            params["cross_y_top"] = uniform(-0.04, 0.02)
-            params["cross_x"] = uniform(0.3, 0.6)
-            # get geometry params on each base
-            num_bases = randint(5, 8)
-            params["num_bases"] = num_bases
-            base_radius, pedal_x_R, base_pedal_num, base_pedal_scale, base_z = [], [], [], [], []
-            init_base_radius, diff_base_radius = uniform(0.09, 0.11), 0.1
-            init_x_R, diff_x_R = uniform(-1.2, -1.35), uniform(-0.7, -1.1)
-            init_pedal_num = randint(num_bases, 15)
-            diff_pedal_scale = uniform(0.5, 0.9)
-            for i in range(num_bases):
-                base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
-                pedal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_pedal_num.append(init_pedal_num - i + randint(0, 2))
-                base_pedal_scale.append(1. - (i * diff_pedal_scale) / num_bases)
-                base_z.append(0. + i * uniform(0.005, 0.008))
-            params["base_radius"] = base_radius
-            params["pedal_x_R"] = pedal_x_R
-            params["base_pedal_num"] = base_pedal_num
-            params["base_pedal_scale"] = base_pedal_scale
-            params["base_z"] = base_z
+        with FixedSeed(self.factory_seed):
+            if mode == 'thin_pedal':
+                params = {}
+                params["cross_y_bottom"] = self.specific_configs.get('cross_y_bottom', uniform(0.08, 0.25))
+                params["cross_y_top"] = self.specific_configs.get('cross_y_top', uniform(-0.04, 0.02))
+                params["cross_x"] = self.specific_configs.get('cross_x', uniform(0.3, 0.6))
+                # get geometry params on each base
+                num_bases = randint(5, 8)
+                params["num_bases"] = self.specific_configs.get('num_bases', num_bases)
+                base_radius, pedal_x_R, base_pedal_num, base_pedal_scale, base_z = [], [], [], [], []
+                init_base_radius = self.specific_configs.get('init_base_radius', uniform(0.09, 0.11))
+                diff_base_radius = self.specific_configs.get('diff_base_radius', 0.1)
+                init_x_R = self.specific_configs.get('init_x_R', uniform(-1.2, -1.35))
+                diff_x_R = self.specific_configs.get('diff_x_R', uniform(-0.7, -1.1))
+                init_pedal_num = self.specific_configs.get('init_pedal_num',randint(num_bases, 15))
+                diff_pedal_scale = self.specific_configs.get('diff_pedal_scale', uniform(0.5, 0.9))
+                for i in range(num_bases):
+                    base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
+                    pedal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
+                    base_pedal_num.append(init_pedal_num - i + randint(0, 2))
+                    base_pedal_scale.append(1. - (i * diff_pedal_scale) / num_bases)
+                    base_z.append(0. + i * uniform(0.005, 0.008))
+                params["base_radius"] = base_radius
+                params["pedal_x_R"] = pedal_x_R
+                params["base_pedal_num"] = base_pedal_num
+                params["base_pedal_scale"] = base_pedal_scale
+                params["base_z"] = base_z
 
-            contour_bit = randint(0, 3)
-            material_bit = randint(0, 3)
+                contour_bit = self.specific_configs.get('contour_bit', randint(0, 3))
+                material_bit = self.specific_configs.get('material_bit',randint(0, 3))
 
-            if contour_bit == 0:
-                params["pedal_curve_param"] = [0.08, 0.4, 0.46, 0.36, 0.17, 0.05]
-            elif contour_bit == 1:
-                params["pedal_curve_param"] = [0.22, 0.37, 0.50, 0.49, 0.30, 0.08]
-            elif contour_bit == 2:
-                params["pedal_curve_param"] = [0.21, 0.26, 0.31, 0.36, 0.29, 0.16]
+                if contour_bit == 0:
+                    params["pedal_curve_param"] = [0.08, 0.4, 0.46, 0.36, 0.17, 0.05]
+                elif contour_bit == 1:
+                    params["pedal_curve_param"] = [0.22, 0.37, 0.50, 0.49, 0.30, 0.08]
+                elif contour_bit == 2:
+                    params["pedal_curve_param"] = [0.21, 0.26, 0.31, 0.36, 0.29, 0.16]
+                else:
+                    raise NotImplemented
+
+                if material_bit == 0:
+                    params["material"] = succulent.shader_green_transition_succulent
+                elif material_bit == 1:
+                    params["material"] = succulent.shader_pink_transition_succulent
+                elif material_bit == 2:
+                    params["material"] = succulent.shader_green_succulent
+                else:
+                    raise NotImplemented
+
+                return params
+
+            elif mode == 'thick_pedal':
+                params = {}
+                params["cross_y_bottom"] = self.specific_configs.get('cross_y_bottom', uniform(0.22, 0.30))
+                params["cross_y_top"] = self.specific_configs.get('cross_y_top', uniform(0.08, 0.15))
+                params["cross_x"] = self.specific_configs.get('cross_x', uniform(0.14, 0.16))
+                # get geometry params on each base
+                num_bases = self.specific_configs.get('num_bases', randint(3, 6))
+                params["num_bases"] = num_bases
+                base_radius, pedal_x_R, base_pedal_num, base_pedal_scale, base_z = [], [], [], [], []
+                init_base_radius = self.specific_configs.get('init_base_radius', uniform(0.12, 0.14))
+                diff_base_radius = self.specific_configs.get('diff_base_radius', 0.11)
+                init_x_R = self.specific_configs.get('init_x_R', uniform(-1.3, -1.4))
+                diff_x_R = self.specific_configs.get('diff_x_R', uniform(-0.1, -1.2))
+                init_pedal_num = self.specific_configs.get('init_pedal_num',randint(num_bases, 12))
+                diff_pedal_scale = self.specific_configs.get('diff_pedal_scale', uniform(0.6, 0.9))
+                for i in range(num_bases):
+                    base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
+                    pedal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
+                    base_pedal_num.append(init_pedal_num - i + randint(0, 2))
+                    base_pedal_scale.append(1. - (i * diff_pedal_scale) / num_bases)
+                    base_z.append(0. + i * uniform(0.005, 0.006))
+                params["base_radius"] = base_radius
+                params["pedal_x_R"] = pedal_x_R
+                params["base_pedal_num"] = base_pedal_num
+                params["base_pedal_scale"] = base_pedal_scale
+                params["base_z"] = base_z
+
+                contour_bit = randint(0, 2)
+                material_bit = randint(0, 2)
+
+                if contour_bit == 0:
+                    params["pedal_curve_param"] = [0.10, 0.36, 0.44, 0.45, 0.30, 0.24]
+                elif contour_bit == 1:
+                    params["pedal_curve_param"] = [0.16, 0.35, 0.48, 0.42, 0.30, 0.18]
+                else:
+                    raise NotImplemented
+
+                if material_bit == 0:
+                    params["material"] = succulent.shader_yellow_succulent
+                elif material_bit == 1:
+                    params["material"] = succulent.shader_whitish_green_succulent
+                else:
+                    raise NotImplemented
+
+                return params
             else:
                 raise NotImplemented
-
-            if material_bit == 0:
-                params["material"] = succulent.shader_green_transition_succulent
-            elif material_bit == 1:
-                params["material"] = succulent.shader_pink_transition_succulent
-            elif material_bit == 2:
-                params["material"] = succulent.shader_green_succulent
-            else:
-                raise NotImplemented
-
-            return params
-
-        elif mode == 'thick_pedal':
-            params = {}
-            params["cross_y_bottom"] = uniform(0.22, 0.30)
-            params["cross_y_top"] = uniform(0.08, 0.15)
-            params["cross_x"] = uniform(0.14, 0.16)
-            # get geometry params on each base
-            num_bases = randint(3, 6)
-            params["num_bases"] = num_bases
-            base_radius, pedal_x_R, base_pedal_num, base_pedal_scale, base_z = [], [], [], [], []
-            init_base_radius, diff_base_radius = uniform(0.12, 0.14), 0.11
-            init_x_R, diff_x_R = uniform(-1.3, -1.4), uniform(-0.1, -1.2)
-            init_pedal_num = randint(num_bases, 12)
-            diff_pedal_scale = uniform(0.6, 0.9)
-            for i in range(num_bases):
-                base_radius.append(init_base_radius - (i * diff_base_radius) / num_bases)
-                pedal_x_R.append(init_x_R - (i * diff_x_R) / num_bases)
-                base_pedal_num.append(init_pedal_num - i + randint(0, 2))
-                base_pedal_scale.append(1. - (i * diff_pedal_scale) / num_bases)
-                base_z.append(0. + i * uniform(0.005, 0.006))
-            params["base_radius"] = base_radius
-            params["pedal_x_R"] = pedal_x_R
-            params["base_pedal_num"] = base_pedal_num
-            params["base_pedal_scale"] = base_pedal_scale
-            params["base_z"] = base_z
-
-            contour_bit = randint(0, 2)
-            material_bit = randint(0, 2)
-
-            if contour_bit == 0:
-                params["pedal_curve_param"] = [0.10, 0.36, 0.44, 0.45, 0.30, 0.24]
-            elif contour_bit == 1:
-                params["pedal_curve_param"] = [0.16, 0.35, 0.48, 0.42, 0.30, 0.18]
-            else:
-                raise NotImplemented
-
-            if material_bit == 0:
-                params["material"] = succulent.shader_yellow_succulent
-            elif material_bit == 1:
-                params["material"] = succulent.shader_whitish_green_succulent
-            else:
-                raise NotImplemented
-
-            return params
-        else:
-            raise NotImplemented
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
