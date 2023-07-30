@@ -149,7 +149,11 @@ class WheatMonocotFactory(GrassesMonocotFactory):
                 self.scale_curve = control_dict['scale_curve']
             else:
                 self.scale_curve = [(0, 1.), (1, .6)]
-            self.leaf_range = .1, .7
+            
+            if 'leaf_range' in control_dict:
+                self.leaf_range = control_dict['leaf_range']
+            else:
+                self.leaf_range = .1, .7
 
     @staticmethod
     def build_base_hue():

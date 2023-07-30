@@ -26,13 +26,13 @@ class PineconeFactory(MonocotGrowthFactory):
     def __init__(self, factory_seed, coarse=False, control_dict={}):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.angle = 2 * np.pi / (np.random.randint(4, 8) + .5)
-            self.max_y_angle = uniform(.7, .8) * np.pi / 2
-            self.leaf_prob = uniform(.9, .95)
-            self.count = int(log_uniform(64, 96))
-            self.stem_offset = uniform(.2, .4)
-            self.perturb = 0
-            self.scale_curve = [(0, .5), (.5, uniform(.6, 1.)), (1, uniform(.1, .2))]
+            self.angle = control_dict.get('angle', 2 * np.pi / (np.random.randint(4, 8) + .5))
+            self.max_y_angle = control_dict.get('max_y_angle', uniform(.7, .8) * np.pi / 2)
+            self.leaf_prob = control_dict.get('leaf_prob', uniform(.9, .95))
+            self.count = control_dict.get('count', int(log_uniform(64, 96)))
+            self.stem_offset = control_dict.get('stem_offset', uniform(.2, .4))
+            self.perturb = control_dict.get('perturb', 0)
+            self.scale_curve = control_dict.get('scale_curve', [(0, .5), (.5, uniform(.6, 1.)), (1, uniform(.1, .2))])
             self.bright_color = *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .01), 1
             self.dark_color = *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .005), 1
             self.material = shaderfunc_to_material(self.shader_monocot, self.dark_color, self.bright_color,

@@ -14,16 +14,16 @@ from assets.utils.tag import tag_object
 
 
 class TussockMonocotFactory(MonocotGrowthFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(TussockMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(.0, .2)
-            self.angle = uniform(np.pi / 20, np.pi / 18)
-            self.z_drag = uniform(.1, .2)
-            self.min_y_angle = uniform(np.pi * .2, np.pi * .25)
-            self.max_y_angle = np.pi / 2
-            self.count = int(log_uniform(512, 1024))
-            self.scale_curve = [(0, uniform(.6, 1.)), (1, uniform(.6, 1.))]
+            self.stem_offset = control_dict.get('stem_offset', uniform(.0, .2))
+            self.angle = control_dict.get('angle',uniform(np.pi / 20, np.pi / 18))
+            self.z_drag = control_dict.get('z_drag', uniform(.1, .2))
+            self.min_y_angle = control_dict.get('min_y_angle', uniform(np.pi * .2, np.pi * .25))
+            self.max_y_angle = control_dict.get('max_y_angle', np.pi / 2)
+            self.count = control_dict.get('count', int(log_uniform(512, 1024)))
+            self.scale_curve = control_dict.get('scale_curve', [(0, uniform(.6, 1.)), (1, uniform(.6, 1.))])
 
     @staticmethod
     def build_base_hue():

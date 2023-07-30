@@ -695,6 +695,7 @@ def geo_fern(nw: NodeWrangler, **kwargs):
 class FernFactory(AssetFactory):
     def __init__(self, factory_seed, coarse=False):
         super(FernFactory, self).__init__(factory_seed, coarse=coarse)
+        
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(

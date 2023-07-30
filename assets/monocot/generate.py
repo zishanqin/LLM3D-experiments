@@ -40,10 +40,11 @@ class MonocotFactory(AssetFactory):
             tag_object(m, 'monocot')
             return m
 
-    def __init__(self, factory_seed, coarse=False, control_dict={}):
+    def __init__(self, factory_seed, coarse=False, control=False, control_dict={}):
         # factory_method=None, grass=None, 
         super(MonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
+            # print('seed', factory_seed)
             grass_factory = [TussockMonocotFactory, GrassesMonocotFactory, WheatMonocotFactory,
                 MaizeMonocotFactory]
             nongrass_factory = [AgaveMonocotFactory, BananaMonocotFactory, TaroMonocotFactory,
@@ -61,33 +62,33 @@ class MonocotFactory(AssetFactory):
             weights = np.array([1] * len(self.factory_methods))
             self.weights = weights / weights.sum()
             # if factory_method is None:
-            with FixedSeed(self.factory_seed):
-                if 'factory_method' in control_dict:
-                    # Tussock, Grasses, Wheat, Maize, Agave, Banana, Taro, Veratrum
-                    name = control_dict['factory_method']
-                    if name == 'Tussock':
-                        factory_method = TussockMonocotFactory
-                    elif name == 'Grasses':
-                        factory_method = GrassesMonocotFactory
-                    elif name == 'Wheat':
-                        factory_method = WheatMonocotFactory
-                    elif name == 'Maize':
-                        factory_method = MaizeMonocotFactory
-                    elif name == 'Agave':
-                        factory_method = AgaveMonocotFactory
-                    elif name == 'Banana':
-                        factory_method = BananaMonocotFactory
-                    elif name == 'Taro':
-                        factory_method = TaroMonocotFactory
-                    elif name == 'Veratrum':
-                        factory_method = VeratrumMonocotFactory
-                        
-                    if 'specific_configs' in control_dict:
-                    # a dict that stores detailed params in the factory -- factory_method must be specified in this case
-                    # details can be seen from the specific class
-                        configs = control_dict['specific_configs']
-                else:
-                    factory_method = np.random.choice(self.factory_methods, p=self.weights)
-                    configs = {}
-                self.factory: MonocotGrowthFactory = factory_method(factory_seed, coarse, configs)
+            configs={}
 
+            if 'factory_method' in control_dict:
+                # Tussock, Grasses, Wheat, Maize, Agave, Banana, Taro, Veratrum
+                name = control_dict['factory_method']
+                if name == 'Tussock':
+                    factory_method = TussockMonocotFactory
+                elif name == 'Grasses':
+                    factory_method = GrassesMonocotFactory
+                elif name == 'Wheat':
+                    factory_method = WheatMonocotFactory
+                elif name == 'Maize':
+                    factory_method = MaizeMonocotFactory
+                elif name == 'Agave':
+                    factory_method = AgaveMonocotFactory
+                elif name == 'Banana':
+                    factory_method = BananaMonocotFactory
+                elif name == 'Taro':
+                    factory_method = TaroMonocotFactory
+                elif name == 'Veratrum':
+                    factory_method = VeratrumMonocotFactory
+                    
+                if 'specific_configs' in control_dict:
+                # a dict that stores detailed params in the factory -- factory_method must be specified in this case
+                # details can be seen from the specific class
+                    configs = control_dict['specific_configs']
+            else:
+                factory_method = np.random.choice(self.factory_methods, p=self.weights)
+
+            self.factory: MonocotGrowthFactory = factory_method(factory_seed, coarse, configs)

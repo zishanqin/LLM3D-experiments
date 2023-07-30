@@ -26,20 +26,20 @@ from assets.utils.tag import tag_object, tag_nodegroup
 
 class VeratrumMonocotFactory(MonocotGrowthFactory):
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control_dict={}):
         super(VeratrumMonocotFactory, self).__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
-            self.stem_offset = uniform(1., 1.5)
-            self.angle = uniform(np.pi / 4, np.pi / 3)
-            self.z_drag = uniform(.4, .5)
-            self.bend_angle = np.pi / 2
-            self.min_y_angle = uniform(np.pi * .25, np.pi * .35)
-            self.max_y_angle = uniform(np.pi * .6, np.pi * .7)
-            self.count = int(log_uniform(32, 64))
-            self.scale_curve = (0, uniform(.8, 1.)), (.4, .6), (.8, uniform(0, .1)), (1, 0)
-            self.leaf_range = 0, uniform(.7, .8)
-            self.bud_angle = uniform(np.pi / 15, np.pi / 12)
-            self.freq = uniform(25, 50)
+            self.stem_offset = control_dict.get('stem_offset', uniform(1., 1.5))
+            self.angle = control_dict.get('angle', uniform(np.pi / 4, np.pi / 3))
+            self.z_drag = control_dict.get('z_drag', uniform(.4, .5))
+            self.bend_angle = control_dict.get('bend_angle', np.pi / 2)
+            self.min_y_angle = control_dict.get('min_y_angle', uniform(np.pi * .25, np.pi * .35))
+            self.max_y_angle = control_dict.get('max_y_angle', uniform(np.pi * .6, np.pi * .7))
+            self.count = control_dict.get('count', int(log_uniform(32, 64)))
+            self.scale_curve = control_dict.get('scale_curve', (0, uniform(.8, 1.)), (.4, .6), (.8, uniform(0, .1)), (1, 0))
+            self.leaf_range = control_dict.get('leaf_range', (0, uniform(.7, .8)))
+            self.bud_angle = control_dict.get('bug_angle', uniform(np.pi / 15, np.pi / 12))
+            self.freq = control_dict.get('freq', uniform(25, 50))
             self.branches_factory = VeratrumBranchMonocotFactory(factory_seed, coarse)
             self.branch_material = shaderfunc_to_material(self.shader_ear)
 
