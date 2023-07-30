@@ -693,16 +693,19 @@ def geo_fern(nw: NodeWrangler, **kwargs):
 
 @gin.register
 class FernFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control=False, control_dict={}):
         super(FernFactory, self).__init__(factory_seed, coarse=coarse)
-        
+        self.params = control_dict     
 
     def create_asset(self, **params):
         bpy.ops.mesh.primitive_plane_add(
             size=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         obj = bpy.context.active_object
 
-        if "fern_mode" not in params:
+        if 'fern_mode' in self.params:
+            # experiments: young_and_grownup, all_grownup
+            params['fern_mode'] = self.params['fern_mode']
+        elif "fern_mode" not in params:
 
             type_bit = randint(0, 2, (1, ))[0]
             if type_bit:
@@ -710,18 +713,29 @@ class FernFactory(AssetFactory):
             else:
                 params["fern_mode"] = "all_grownup"
 
-        if "scale" not in params:
+        if 'scale' in self.params:
+            # experiments: 0, 0.02, 0.1, 0.5, 1
+            params['scale'] = self.params['scale']
+        elif "scale" not in params:
             params["scale"] = 0.02
 
-        if "version_num" not in params:
+        if 'version' in self.params:
+            # 1, 2, 3, 4, 5
+            params['version'] = self.params['version']
+        elif "version_num" not in params:
             params["version_num"] = 5
 
-        if "pinnae_num" not in params:
+        if 'pinnae_num' in self.params:
+            # 12 ,15, 18, 20, 25, 30
+            params['pinnae_num'] = self.params['pinnae_num']
+        elif "pinnae_num" not in params:
             params["pinnae_num"] = randint(12, 30, size=(1,))[0]
 
         # Make the Leaf and Delete It Later
+        leaf_width = self.params.get('leaf_width', 0.4) # range: 0.2, 0.4, 0.6, 0.8, 1
+        width_rand = self.params.get('width_rand', 0.04) # range: 0.02, 0.04, 0.06, 0.08, 0.1
         lf_seed = randint(0, 1000, size=(1,))[0]
-        leaf_model = Leaf.LeafFactory(genome={"leaf_width": 0.4, "width_rand": 0.04}, factory_seed=lf_seed)
+        leaf_model = Leaf.LeafFactory(genome={"leaf_width": leaf_width, "width_rand": width_rand}, factory_seed=lf_seed)
         leaf = leaf_model.create_asset(material=False)
         params["leaf"] = leaf
 
