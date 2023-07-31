@@ -583,18 +583,19 @@ def geometry_dandelion_seed_nodes(nw: NodeWrangler, **kwargs):
 
 
 class DandelionFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control=False, control_dict={}):
         super(DandelionFactory, self).__init__(factory_seed, coarse=coarse)
         # self.flower_mode = ['full_flower', 'no_flower', 'top_half_flower', 'top_missing_flower', 'sparse_flower']
         # self.flower_mode_pb = [0.4, 0.04, 0.23, 0.13, 0.2]
         self.flower_mode = ['sparse_flower']
         self.flower_mode_pb = [1]
         self.customized_params = None
+        self.control(control_dict)
 
-    def control(control_dict):
+    def control(self, control_dict):
         # Mode control
         if 'single_mode' in control_dict:
-            self.flower_mode = control_dict['single_mode']
+            self.flower_mode = [control_dict['single_mode']]
             self.flower_mode_pb = [1]
         elif 'multi_mode' in control_dict:
             # contol['multi_mode'] stores a dict with two keys:

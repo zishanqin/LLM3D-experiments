@@ -21,7 +21,7 @@ from assets.utils.tag import tag_object, tag_nodegroup
 
 class GrassTuftFactory(AssetFactory):
 
-    def __init__(self, seed, control_dict={}):
+    def __init__(self, seed, control=False, control_dict={}):
 
         super(GrassTuftFactory, self).__init__(seed)
         

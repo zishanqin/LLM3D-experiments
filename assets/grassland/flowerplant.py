@@ -571,14 +571,15 @@ def geo_flowerplant(nw: NodeWrangler, **kwargs):
 
 
 class FlowerPlantFactory(AssetFactory):
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control=False, control_dict={}):
         super(FlowerPlantFactory, self).__init__(factory_seed, coarse=coarse)
         self.leaves_version_num = 2
         self.flowers_version_num = 5
         self.leaf_width = 0.35
         self.rad = uniform(0.4, 0.7)
+        self.control(control_dict)
 
-    def control(control_dict):
+    def control(self, control_dict):
         # Control flower or leave version
         if 'leaves_version' in control_dict:
             # v1: not smooth
@@ -614,7 +615,7 @@ class FlowerPlantFactory(AssetFactory):
 
         # Make the Leaf and Delete It Later
         leaves = []
-        for _ in range(self.leaves_version_num):
+        for _ in range(int(self.leaves_version_num)):
             lf_seed = randint(0, 1000, size=(1,))[0]
             leaf_model = Leaf.LeafFactory(genome={"leaf_width": self.leaf_width, "width_rand": 0.1}, factory_seed=lf_seed)
             leaf = leaf_model.create_asset()
