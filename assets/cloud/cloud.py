@@ -27,20 +27,20 @@ import util
 from util import blender as butil
 
 
-# Global variables for control
-resolution_control = 256
-cloud_size_control = 128
-cloud_quantity_dict = {
-    'Cumulus':6, 
-    'Cumulonimbus': 6, 
-    'Stratocumulus':6, 
-    'Altocumulus':7
-    }
-total_sample_num_control = 128
-preview_sample_num_control = 32
-grid_size_control = 256
-single_cloud_type = 'Cumulonimbus'
-specific_configs = {}
+# # Global variables for control
+# resolution_control = 256
+# cloud_size_control = 128
+# cloud_quantity_dict = {
+#     'Cumulus':6, 
+#     'Cumulonimbus': 6, 
+#     'Stratocumulus':6, 
+#     'Altocumulus':7
+#     }
+# total_sample_num_control = 128
+# preview_sample_num_control = 32
+# grid_size_control = 256
+# single_cloud_type = 'Cumulonimbus'
+# specific_configs = {}
 
 
 def set_curves(curve, points):
@@ -51,34 +51,49 @@ def set_curves(curve, points):
 
 
 class Cumulus(object):
-    if 'Cumulus' not in specific_configs:
-        DENSITY_RANGE = [1.0, 1.0]
-        ANISOTROPY_RANGE = [-0.5, 0.5]
-        NOISE_SCALE_RANGE = [8.0, 16.0]
-        NOISE_DETAIL_RANGE = [1.0, 16.0]
-        VORONOI_SCALE_RANGE = [2.0, 6.0]
-        MIX_FACTOR_RANGE = [0.3, 0.8]
-        ANGLE_ROTATE_RANGE = [0.0, np.pi / 4]
-        EMISSION_RANGE = [0.0, 0.0]
+    DENSITY_RANGE = [1.0, 1.0]
+    ANISOTROPY_RANGE = [-0.5, 0.5]
+    NOISE_SCALE_RANGE = [8.0, 16.0]
+    NOISE_DETAIL_RANGE = [1.0, 16.0]
+    VORONOI_SCALE_RANGE = [2.0, 6.0]
+    MIX_FACTOR_RANGE = [0.3, 0.8]
+    ANGLE_ROTATE_RANGE = [0.0, np.pi / 4]
+    EMISSION_RANGE = [0.0, 0.0]
 
-        PLACEHOLDER_DENSITY = 32.0
-        MAX_EXPECTED_SCALE = 128.0
+    PLACEHOLDER_DENSITY = 32.0
+    MAX_EXPECTED_SCALE = 128.0
 
-        PLANE_SCALES = [16, 16, 4]
+    PLANE_SCALES = [16, 16, 4]
 
-        scale = np.random.uniform(16.0, 32.0)
+    scale = np.random.uniform(16.0, 32.0)
 
-        configs = None
-    else:
-        configs = specific_configs['Cumulus']
-        scale = configs['scale']
-        configs.pop('scale')
-
-    def __init__(self, name, ref_cloud):
+    def __init__(self, name, ref_cloud, control_dict={}):
         super().__init__()
         self.name = name
         self.ref_cloud = ref_cloud
+        self.specific_configs = control_dict
         self.geo_params, self.shader_params = self.get_node_params()
+       
+        self.DENSITY_RANGE = [1.0, 1.0]
+        self.ANISOTROPY_RANGE = [-0.5, 0.5]
+        self.NOISE_SCALE_RANGE = [8.0, 16.0]
+        self.NOISE_DETAIL_RANGE = [1.0, 16.0]
+        self.VORONOI_SCALE_RANGE = [2.0, 6.0]
+        self.MIX_FACTOR_RANGE = [0.3, 0.8]
+        self.ANGLE_ROTATE_RANGE = [0.0, np.pi / 4]
+        self.EMISSION_RANGE = [0.0, 0.0]
+
+        self.PLACEHOLDER_DENSITY = 32.0
+        # self.MAX_EXPECTED_SCALE = 128.0
+
+        self.PLANE_SCALES = [16, 16, 4]
+
+        self.scale = np.random.uniform(16.0, 32.0)
+
+
+        # confis = specific_configs['Cumulus']
+        self.scale = control_dict['scale']
+        self.specific_configs.pop('scale')
 
     def get_scale(self):
         
@@ -97,17 +112,17 @@ class Cumulus(object):
         return curve_func
 
     def get_params(self):
-        cls = type(self)
+        # cls = type(self)
         
-        if configs is None:
-            density = np.random.uniform(*cls.DENSITY_RANGE)
-            anisotropy = np.random.uniform(*cls.ANISOTROPY_RANGE)
-            noise_scale = np.random.uniform(*cls.NOISE_SCALE_RANGE)
-            noise_detail = np.random.uniform(*cls.NOISE_DETAIL_RANGE)
-            voronoi_scale = np.random.uniform(*cls.VORONOI_SCALE_RANGE)
-            mix_factor = np.random.uniform(*cls.MIX_FACTOR_RANGE)
-            emission = np.random.uniform(*cls.EMISSION_RANGE)
-            rotate_angle = np.random.uniform(*cls.ANGLE_ROTATE_RANGE)
+        if self.specific_configs is None:
+            density = np.random.uniform(self.DENSITY_RANGE)
+            anisotropy = np.random.uniform(self.ANISOTROPY_RANGE)
+            noise_scale = np.random.uniform(self.NOISE_SCALE_RANGE)
+            noise_detail = np.random.uniform(self.NOISE_DETAIL_RANGE)
+            voronoi_scale = np.random.uniform(self.VORONOI_SCALE_RANGE)
+            mix_factor = np.random.uniform(self.MIX_FACTOR_RANGE)
+            emission = np.random.uniform(self.EMISSION_RANGE)
+            rotate_angle = np.random.uniform(self.ANGLE_ROTATE_RANGE)
 
             return {
                 'density': density,
@@ -119,7 +134,7 @@ class Cumulus(object):
                 'rotate_angle': rotate_angle,
                 'emission_strength': emission}
         else:
-            return configs
+            return self.specific_configs
 
     def update_geo_params(self, geo_params):
         return geo_params
@@ -156,8 +171,8 @@ class Cumulus(object):
         cloud = bpy.data.objects.new(self.name, self.ref_cloud.copy())
         link_object(cloud)
 
-        geo_params = self.geo_params
-        shader_params = self.shader_params
+        geo_params = self.specific_configs.get('geo_params', self.geo_params)
+        shader_params = self.specific_configs.get('shader_params', self.shader_params)
         points_only = marching_cubes
 
         mat = surface.add_material(cloud, shader_material, selection=selection, input_kwargs=shader_params, )
@@ -225,23 +240,22 @@ class Cumulus(object):
 
 
 class Cumulonimbus(Cumulus):
-    if 'Cumulonimbus' not in specific_configs:
-        DENSITY_RANGE = [1.0, 1.0]
-        EMISSION_RANGE = [0.01, 0.01]
-
-        PLACEHOLDER_DENSITY = 8.0
-        MAX_EXPECTED_SCALE = 2048.0
-
-        PLANE_SCALES = [16, 16, 32]
-        scale = np.random.uniform(512.0, 1024.0)
-        configs = None
-    else:
-        configs = specific_configs
-        scale = configs['scale']
-        configs.pop('scale')
-
-    def __init__(self, name, ref_cloud):
+    def __init__(self, name, ref_cloud, control_dict={}):
         super().__init__(name, ref_cloud)
+        self.specific_configs = control_dict
+        # if self.specific_configs is None:
+        self.DENSITY_RANGE = [1.0, 1.0]
+        self.EMISSION_RANGE = [0.01, 0.01]
+
+        self.PLACEHOLDER_DENSITY = 8.0
+        self.MAX_EXPECTED_SCALE = 2048.0
+
+        self.PLANE_SCALES = [16, 16, 32]
+        self.scale = np.random.uniform(512.0, 1024.0)
+        # else:
+        if self.specific_configs is not None:
+            self.scale = self.specific_configs.get('scale', self.scale)
+            self.specific_configs.pop('scale')
 
     def sample_curves(self):
         first_pt_x = np.random.uniform(-0.65, -0.50)
@@ -268,29 +282,31 @@ class Cumulonimbus(Cumulus):
         return scales
 
     def update_shader_params(self, shader_params):
-        if configs is None:
+        if 'shader_params' not in self.specific_configs:
             shader_params.update({'density': np.random.uniform(0.1, 0.3), })
         else: 
-            shader_params = configs['Cumulonimbus']
+            shader_params = self.specific_configs['shader_params']
         return shader_params
 
 
 class Stratocumulus(Cumulus):
-    if 'Stratocumulus' not in specific_configs:
-        ANGLE_ROTATE_RANGE = [0.0, np.pi / 4]
-        scale = np.random.uniform(16.0, 32.0)
-        configs = None
-    else:
-        configs = specific_configs['Stratocumulus']
-        scale = configs['scale']
-        configs.pop('scale')
+    def __init__(self, name, ref_cloud, control_dict={}):
+        self.specific_configs = control_dict if control_dict!={} else None
+        # if self.specific_configs is None:
+        self.ANGLE_ROTATE_RANGE = [0.0, np.pi / 4]
+        self.scale = np.random.uniform(16.0, 32.0)
+            # configs = None
+        # else:
+            # configs = specific_configs['Stratocumulus']
+        self.scale = self.specific_configs['scale']
+        self.specific_configs.pop('scale')
 
 
     def update_shader_params(self, shader_params):
-        if configs is None:
+        if 'shader_params' not in self.specific_configs:
             shader_params.update({'density': np.random.uniform(0.01, 0.10), })
         else: 
-            shader_params = configs
+            shader_params = self.specific_configs['shader_params']
         return shader_params
 
     def get_scale(self):
@@ -332,18 +348,20 @@ class Stratocumulus(Cumulus):
 
 
 class Altocumulus(Cumulus):
-    if 'Altocumulus' not in specific_configs:
-        SCATTER_VORONOI_SCALE_RANGE = [1.0, 4.0]
-        SCATTER_GRID_VERTICES_RANGE = [4, 12]
+    def __init__(self, name, ref_cloud, control_dict={}):
+        self.specific_configs = control_dict if control_dict!={} else None
+        # if self.specific_configs is None:
+        self.SCATTER_VORONOI_SCALE_RANGE = [1.0, 4.0]
+        self.SCATTER_GRID_VERTICES_RANGE = [4, 12]
 
-        NUM_SUBCLOUDS = 8
+        self.NUM_SUBCLOUDS = 8
 
-        scale = np.random.uniform(16.0, 32.0)
-        configs = None
-    else:
-        configs = specific_configs
-        scale = configs['scale']
-        configs.pop('scale')
+        self.scale = np.random.uniform(16.0, 32.0)
+            # configs = None
+        # else:
+            # configs = specific_configs
+        self.scale = self.specific_configs['scale']
+        self.specific_configs.pop('scale')
 
     def get_scale(self):
         scale_z = self.scale
@@ -353,23 +371,23 @@ class Altocumulus(Cumulus):
         return [s * 4 for s in scales]
 
     def get_params(self):
-        if self.configs is None:
-            cls = type(self)
+        if self.specific_configs == {}:
+            # cls = type(self)
 
             # Params
-            densities = np.random.uniform(*cls.DENSITY_RANGE, size=cls.NUM_SUBCLOUDS)
-            anisotropies = np.random.uniform(*cls.ANISOTROPY_RANGE, size=cls.NUM_SUBCLOUDS)
-            noise_scales = np.random.uniform(*cls.NOISE_SCALE_RANGE, size=cls.NUM_SUBCLOUDS)
-            noise_details = np.random.uniform(*cls.NOISE_DETAIL_RANGE, size=cls.NUM_SUBCLOUDS)
-            voronoi_scales = np.random.uniform(*cls.VORONOI_SCALE_RANGE, size=cls.NUM_SUBCLOUDS)
-            mix_factors = np.random.uniform(*cls.MIX_FACTOR_RANGE, size=cls.NUM_SUBCLOUDS)
-            emissions = np.random.uniform(*cls.EMISSION_RANGE, size=cls.NUM_SUBCLOUDS)
-            rotate_angles = np.random.uniform(*cls.ANGLE_ROTATE_RANGE, size=cls.NUM_SUBCLOUDS)
+            densities = np.random.uniform(self.DENSITY_RANGE, size=self.NUM_SUBCLOUDS)
+            anisotropies = np.random.uniform(self.ANISOTROPY_RANGE, size=self.NUM_SUBCLOUDS)
+            noise_scales = np.random.uniform(self.NOISE_SCALE_RANGE, size=self.NUM_SUBCLOUDS)
+            noise_details = np.random.uniform(self.NOISE_DETAIL_RANGE, size=self.NUM_SUBCLOUDS)
+            voronoi_scales = np.random.uniform(self.VORONOI_SCALE_RANGE, size=self.NUM_SUBCLOUDS)
+            mix_factors = np.random.uniform(self.MIX_FACTOR_RANGE, size=self.NUM_SUBCLOUDS)
+            emissions = np.random.uniform(self.EMISSION_RANGE, size=self.NUM_SUBCLOUDS)
+            rotate_angles = np.random.uniform(self.ANGLE_ROTATE_RANGE, size=self.NUM_SUBCLOUDS)
 
             # Scatter Params
-            voronoi_scale = np.random.uniform(*cls.SCATTER_VORONOI_SCALE_RANGE)
-            vertices_x = np.random.randint(*cls.SCATTER_GRID_VERTICES_RANGE)
-            vertices_y = np.random.randint(*cls.SCATTER_GRID_VERTICES_RANGE)
+            voronoi_scale = np.random.uniform(self.SCATTER_VORONOI_SCALE_RANGE)
+            vertices_x = np.random.randint(self.SCATTER_GRID_VERTICES_RANGE)
+            vertices_y = np.random.randint(self.SCATTER_GRID_VERTICES_RANGE)
             scatter_params = {'voronoi_scale': voronoi_scale, 'vertices_x': vertices_x, 'vertices_y': vertices_y, }
 
             return {
@@ -383,7 +401,7 @@ class Altocumulus(Cumulus):
                 'emission_strengths': emissions,
                 'scatter_params': scatter_params, }
         else:
-            return configs
+            return self.specific_configs
 
     def update_shader_params(self, shader_params):
         params = zip(shader_params['anisotropies'], shader_params['noise_scales'],

@@ -33,10 +33,12 @@ class CloudFactory(AssetFactory):
         max_distance=300,
         steps=128,
         cloudy=("bool", 0.01),
+        control=False,
+        control_dict={}
     ):
         super(CloudFactory, self).__init__(factory_seed, coarse=coarse)
 
-        self.max_distance = max_distance
+        self.max_distance = control_dict.get('max_distance', max_distance)
 
         self.ref_cloud = bpy.data.meshes.new('ref_cloud')
         self.ref_cloud.from_pydata(create_3d_grid(steps=steps), [], [])
@@ -45,24 +47,28 @@ class CloudFactory(AssetFactory):
         with FixedSeed(factory_seed):
             self.cloudy = rg(cloudy)
 
+        self.cloudy = control_dict.get('cloudy', self.cloudy)
         self.cloud_types = [Cumulonimbus, ] if self.cloudy else [Cumulus, Stratocumulus, Altocumulus, ]
 
-        self.resolutions = {
+        self.resolutions = control_dict.get('resolution',
+        {
             Cumulonimbus: [16, 128],
             Cumulus: [16, 128],
             Stratocumulus: [32, 256],
-            Altocumulus: [16, 64], }
-        scale_resolution = 4
+            Altocumulus: [16, 64], })
+        scale_resolution = control_dict.get('scale_resolution', 4)
         self.resolutions = {k: (scale_resolution * u, scale_resolution * v) for k, (u, v) in
             self.resolutions.items()}
 
-        self.min_distance = 256 if self.cloudy else 64
-        self.dome_radius = 1024 if self.cloudy else 256
-        self.dome_threshold = 32 if self.cloudy else 0
-        self.density_range = [1e-5, 1e-4] if self.cloudy else [1e-4, 2e-4]
-
+        self.min_distance = control_dict.get('min_distance', 256 if self.cloudy else 64)
+        self.dome_radius = control_dict.get('dome_radius', 1024 if self.cloudy else 256)
+        self.dome_threshold = control_dict.get('dome_threshold', 32 if self.cloudy else 0)
+        self.density_range = control_dict.get('density_range', [1e-5, 1e-4] if self.cloudy else [1e-4, 2e-4])
+        
         self.max_scale = max([t.MAX_EXPECTED_SCALE for t in self.cloud_types])
         self.density = max([t.PLACEHOLDER_DENSITY for t in self.cloud_types])
+        self.cloud_type = control_dict.get('cloud_type', None)
+        self.specific_configs = control_dict.get('specific_configs', None)
 
     def spawn_locations(self):
         obj = new_cube()
@@ -78,12 +84,21 @@ class CloudFactory(AssetFactory):
         return butil.spawn_empty('placeholder', disp_type='CUBE', s=self.max_scale)
 
     def create_asset(self, distance, **kwargs):
-        cloud_type = np.random.choice(self.cloud_types)
+        if self.cloud_type is None:
+            cloud_type = np.random.choice(self.cloud_types)
+        elif self.cloud_type == 'Cumulonimbus':
+            cloud_type = Cumulonimbus
+        elif self.cloud_type == 'Cumulus':
+            cloud_type = Cumulus
+        elif self.cloud_type == 'Stratocumulus':
+            cloud_type = Stratocumulus
+        elif self.cloud_type == 'Altocumulus':
+            cloud_type = Altocumulus
         resolution_min, resolution_max = self.resolutions[cloud_type]
         resolution = max(1 - distance / self.max_distance, 0)
         resolution = resolution * (resolution_max - resolution_min) + resolution_min
         resolution = int(resolution)
-        new_cloud = cloud_type("Cloud", self.ref_cloud)
+        new_cloud = cloud_type("Cloud", self.ref_cloud, self.specific_configs)
         new_cloud = new_cloud.make_cloud(marching_cubes=False, resolution=resolution, )
         tag_object(new_cloud, 'cloud')
         return new_cloud
@@ -124,28 +139,32 @@ class CloudFactory(AssetFactory):
 
 
 class CumulonimbusFactory(CloudFactory):
-    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, ):
+    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, control_dict={}):
         self.cloud_types = [Cumulonimbus]
         super(CumulonimbusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
         self.cloud_types = [Cumulonimbus]
+        self.specific_configs = control_dict
 
 
 class CumulusFactory(CloudFactory):
-    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, ):
+    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, control_dict={}):
         self.cloud_types = [Cumulus]
         super(CumulusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
         self.cloud_types = [Cumulus]
+        self.specific_configs = control_dict
 
 
 class StratocumulusFactory(CloudFactory):
-    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, ):
+    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, control_dict={}):
         self.cloud_types = [Stratocumulus]
         super(StratocumulusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
         self.cloud_types = [Stratocumulus]
+        self.specific_configs = control_dict
 
 
 class AltocumulusFactory(CloudFactory):
-    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, ):
+    def __init__(self, factory_seed, coarse=False, max_distance=300, steps=128, control_dict={}):
         self.cloud_types = [Altocumulus]
         super(AltocumulusFactory, self).__init__(factory_seed, coarse, max_distance, steps)
         self.cloud_types = [Altocumulus]
+        self.specific_configs = control_dict

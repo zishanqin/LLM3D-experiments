@@ -20,9 +20,9 @@ from util.math import FixedSeed, dict_lerp
 from assets.utils.tag import tag_object, tag_nodegroup
 
 # patal related variables
-petal_control = None
-center_control = None
-pct_inner = 1
+# petal_control = None
+# center_control = None
+# pct_inner = 1
 
 
 @node_utils.to_nodegroup('nodegroup_polar_to_cart_old', singleton=True)
@@ -379,56 +379,9 @@ def nodegroup_plant_seed(nw):
     group_output = nw.new_node(Nodes.GroupOutput,
         input_kwargs={'Mesh': tag_nodegroup(nw, curve_to_mesh, 'seed')})
 
-def shader_flower_center(nw):
-    ambient_occlusion = nw.new_node(Nodes.AmbientOcclusion)
-    
-    colorramp = nw.new_node(Nodes.ColorRamp,
-        input_kwargs={'Fac': ambient_occlusion.outputs["Color"]})
-    colorramp.color_ramp.elements.new(1)
 
-    colorramp.color_ramp.elements[0].position = center_control[0]['position']
-    colorramp.color_ramp.elements[0].color = center_control[0]['color']
-    colorramp.color_ramp.elements[1].position = center_control[1]['position']
-    colorramp.color_ramp.elements[1].color = center_control[1]['color']
-    colorramp.color_ramp.elements[2].position = center_control[2]['position']
-    colorramp.color_ramp.elements[2].color = center_control[2]['color']
 
-    # colorramp.color_ramp.elements[0].position = 0.4841
-    # colorramp.color_ramp.elements[0].color = (0.0127, 0.0075, 0.0026, 1.0)
-    # colorramp.color_ramp.elements[1].position = 0.8591
-    # colorramp.color_ramp.elements[1].color = (0.0848, 0.0066, 0.0007, 1.0)
-    # colorramp.color_ramp.elements[2].position = 1.0
-    # colorramp.color_ramp.elements[2].color = (1.0, 0.6228, 0.1069, 1.0)
-    
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': colorramp.outputs["Color"]})
-    
-    material_output = nw.new_node(Nodes.MaterialOutput,
-        input_kwargs={'Surface': principled_bsdf})
 
-def shader_petal(nw):
-
-    translucent_color_change = petal_control['translucent_color_change']
-    specular = petal_control['specular']
-    roughness = petal_control['roughness']
-    translucent_amt = petal_control['translucent_amt']
-
-    petal_color = nw.new_node(Nodes.RGB)
-    petal_color.outputs[0].default_value = color.color_category('petal')
-
-    translucent_color = nw.new_node(Nodes.MixRGB, [translucent_color_change, petal_color, color.color_category('petal')])
-
-    translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF,
-        input_kwargs={'Color': translucent_color})
-    
-    principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
-        input_kwargs={'Base Color': petal_color, 'Specular': specular, 'Roughness': roughness })
-    
-    mix_shader = nw.new_node(Nodes.MixShader,
-        input_kwargs={'Fac': translucent_amt, 1: principled_bsdf, 2: translucent_bsdf})
-    
-    material_output = nw.new_node(Nodes.MaterialOutput,
-        input_kwargs={'Surface': mix_shader})
 
 def geo_flower(nw, petal_material, center_material):
     group_input = nw.new_node(Nodes.GroupInput,
@@ -565,70 +518,143 @@ def geo_flower(nw, petal_material, center_material):
 
 class FlowerFactory(AssetFactory):
 
-    def __init__(self, factory_seed, rad=0.15, diversity_fac=0.25):
+    def __init__(self, factory_seed, rad=0.15, diversity_fac=0.25, control=False, control_dict={}):
         super(FlowerFactory, self).__init__(factory_seed=factory_seed)
 
         diversity_fac = 1
         self.rad = rad
         self.diversity_fac = diversity_fac
         self.seed = factory_seed
+        self.pct_inner = 1
+        self.petal_color = np.array(control_dict['petal_color'])
 
-        
+        # self.petal_control = None
 
         with FixedSeed(factory_seed):
-            global petal_control
-            petal_control = {
+            # global petal_control
+            self.petal_control = {
             'translucent_color_change': 0.5, #uniform(0.1, 0.6),
             'specular': 0.6, #normal(0.6, 0.1),
             'roughness': 0.4,#normal(0.4, 0.05),
             'translucent_amt': 0.3, #normal(0.3, 0.05)
             }
 
-            global center_control
-            center_control = [
+            # global center_control
+            self.center_control = [
                 {'position': 0.4841, 'color': (0.0127, 0.0075, 0.0026, 1.0)},
                 {'position': 0.8591, 'color': (0.0848, 0.0066, 0.0007, 1.0)},
                 {'position': 1.0, 'color': (0,0,0, 1.0)}
             ]
 
-            self.petal_material = surface.shaderfunc_to_material(shader_petal)
-            self.center_material = surface.shaderfunc_to_material(shader_flower_center)
+            
+            self.petal_material = surface.shaderfunc_to_material(self.shader_petal)
+            
+            self.center_material = surface.shaderfunc_to_material(self.shader_flower_center)
+            # print('------',self.pct_inner)
+            # exit()
             self.species_params = self.get_flower_params(self.rad)
+            # print('------',self.pct_inner)
+            # exit()
 
-    def control(control_dict):
+        self.control(control_dict)
+        
+
+    def shader_petal(self, nw):
+
+        translucent_color_change = self.petal_control['translucent_color_change']
+        specular = self.petal_control['specular']
+        roughness = self.petal_control['roughness']
+        translucent_amt = self.petal_control['translucent_amt']
+
+        petal_color = nw.new_node(Nodes.RGB)
+        petal_color.outputs[0].default_value = self.petal_color if self.petal_color is not None else color.color_category('petal')
+        # print(petal_color.outputs[0].default_value)
+        # print(type(color.color_category('petal')))
+
+        # exit()
+
+        translucent_color = nw.new_node(Nodes.MixRGB, [translucent_color_change, petal_color, color.color_category('petal')])
+
+        translucent_bsdf = nw.new_node(Nodes.TranslucentBSDF,
+            input_kwargs={'Color': translucent_color})
+        
+        principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+            input_kwargs={'Base Color': petal_color, 'Specular': specular, 'Roughness': roughness })
+        
+        mix_shader = nw.new_node(Nodes.MixShader,
+            input_kwargs={'Fac': translucent_amt, 1: principled_bsdf, 2: translucent_bsdf})
+        
+        material_output = nw.new_node(Nodes.MaterialOutput,
+            input_kwargs={'Surface': mix_shader})
+
+    def shader_flower_center(self, nw):
+        ambient_occlusion = nw.new_node(Nodes.AmbientOcclusion)
+        
+        colorramp = nw.new_node(Nodes.ColorRamp,
+            input_kwargs={'Fac': ambient_occlusion.outputs["Color"]})
+        colorramp.color_ramp.elements.new(1)
+
+        colorramp.color_ramp.elements[0].position = self.center_control[0]['position']
+        colorramp.color_ramp.elements[0].color = self.center_control[0]['color']
+        colorramp.color_ramp.elements[1].position = self.center_control[1]['position']
+        colorramp.color_ramp.elements[1].color = self.center_control[1]['color']
+        colorramp.color_ramp.elements[2].position = self.center_control[2]['position']
+        colorramp.color_ramp.elements[2].color = self.center_control[2]['color']
+
+        # colorramp.color_ramp.elements[0].position = 0.4841
+        # colorramp.color_ramp.elements[0].color = (0.0127, 0.0075, 0.0026, 1.0)
+        # colorramp.color_ramp.elements[1].position = 0.8591
+        # colorramp.color_ramp.elements[1].color = (0.0848, 0.0066, 0.0007, 1.0)
+        # colorramp.color_ramp.elements[2].position = 1.0
+        # colorramp.color_ramp.elements[2].color = (1.0, 0.6228, 0.1069, 1.0)
+        
+        principled_bsdf = nw.new_node(Nodes.PrincipledBSDF,
+            input_kwargs={'Base Color': colorramp.outputs["Color"]})
+        
+        material_output = nw.new_node(Nodes.MaterialOutput,
+            input_kwargs={'Surface': principled_bsdf})
+
+    def control(self, control_dict):
         with FixedSeed(self.seed):
             if 'rad' in control_dict: # control the size of the rad
                 self.rad = control_dict['rad'] # default rad=0.15
             if 'diversity_fac' in control_dict: # the change is quite minor
                 self.diversity_fac = control_dict['diversity_fac'] # default diversity_fac = 0.25
             
+            # Control petal color
+            if 'petal_color' in control_dict:
+                # example: [ 0.29129335  0.55524176  0.44468221  1.        ]
+                self.petal_color = np.array(control_dict['petal_color'])
+            else:
+                self.petal_color = np.array([ 0.29129335,  0.55524176,  0.44468221,  1.        ])
+
             # Control petal-related properties
             if 'petal' in control_dict: 
                 # petal base color has been set in the nodes, then we only use other params to control how much the color changes, how rough it is, etc
-                global petal_control
+                # global petal_control
                 if 'translucent_color_change' in control_dict['petal']:
-                    petal_control['translucent_color_change'] = control_dict['petal']['translucent_color_change']
+                    self.petal_control['translucent_color_change'] = control_dict['petal']['translucent_color_change']
                 else: 
-                    petal_control['translucent_color_change'] = uniform(0.1, 0.6)
+                    self.petal_control['translucent_color_change'] = uniform(0.1, 0.6)
                 
                 other_petal_properties = ['specular','roughness','translucent_amt']
                 normal_factors = [normal(0.6, 0.1), normal(0.4, 0.05), normal(0.3, 0.05)]
                 
                 for p in other_petal_properties:
                     for i,p in enumerate(control_dict['petal']):
-                        petal_control[p] = control_dict['petal'][p]
+                        self.petal_control[p] = control_dict['petal'][p]
                     else:
-                        petal_control[p] = normal_factors[i] # if the properties are not specified, randomize accordingly
+                        self.petal_control[p] = normal_factors[i] # if the properties are not specified, randomize accordingly
             
             # Control center properties
             if 'center' in control_dict:
-                global center_control
-                center_control = control_dict['center']
+                # global center_control
+                self.center_control = control_dict['center']
                 # this should be a list of dicts, each dict stores the position and color info for one layer of the center
                 # the order of the layers is from bottom to the top
                 # to test this, set a large number for pct_inner to keep the flower as open as possible (1 is the maximum)
             else:
-                center_control = [
+                self.center_control = [
                 {'position': 0.4841, 'color': (0.0127, 0.0075, 0.0026, 1.0)},
                 {'position': 0.8591, 'color': (0.0848, 0.0066, 0.0007, 0)},
                 {'position': 1.0, 'color': (1.0, 0.6228, 0.1069, 1.0)}
@@ -636,24 +662,26 @@ class FlowerFactory(AssetFactory):
                 
 
             # Control the flower opening
-            global pct_inner
+            # global pct_inner
             if 'open' in control_dict:
-                pct_inner = control_dict['open']
+                self.pct_inner = control_dict['open']
             else:
-                pct_inner = uniform(0.05, 0.4) 
+                self.pct_inner = uniform(0.05, 0.4) 
+            # print('------',self.pct_inner)
+            # exit()
                 
 
 
-    @staticmethod
-    def get_flower_params(overall_rad=0.05):
-        base_width = 2 * np.pi * overall_rad * pct_inner / normal(20, 5)
+    # @staticmethod
+    def get_flower_params(self, overall_rad=0.05):
+        base_width = 2 * np.pi * overall_rad * self.pct_inner / normal(20, 5)
         top_width = overall_rad * np.clip(normal(0.7, 0.3), base_width * 1.2, 100)
 
         min_angle, max_angle = np.deg2rad(np.sort(uniform(-20, 100, 2)))
 
         return {
-            'Center Rad': overall_rad * pct_inner,
-            'Petal Dims': np.array([overall_rad * (1 - pct_inner), base_width, top_width], dtype=np.float32),
+            'Center Rad': overall_rad * self.pct_inner,
+            'Petal Dims': np.array([overall_rad * (1 - self.pct_inner), base_width, top_width], dtype=np.float32),
             'Seed Size': uniform(0.005, 0.01),
             'Min Petal Angle': min_angle,
             'Max Petal Angle': max_angle,
@@ -666,7 +694,7 @@ class FlowerFactory(AssetFactory):
         vert = butil.spawn_vert('flower')
         mod = surface.add_geomod(vert, geo_flower, 
             input_kwargs={'petal_material': self.petal_material, 'center_material': self.center_material})
-
+        # print('--------')
         inst_params = self.get_flower_params(self.rad * normal(1, 0.05))
         params = dict_lerp(self.species_params, inst_params, 0.25)
         surface.set_geomod_inputs(mod, params)
