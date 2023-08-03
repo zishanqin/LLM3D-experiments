@@ -20,10 +20,27 @@ from placement.factory import AssetFactory
 from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
 class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
-    def __init__(self, factory_seed, scale=1.0, coarse=False):
+    def __init__(self, factory_seed, scale=1.0, coarse=False, control=False, control_dict={}):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
         self.name = 'coconut_green'
-        
+        if 'shape' in control_dict:
+            # print(control_dict)
+            self.shape_params = control_dict['shape']
+        else:
+            self.shape_params = None
+
+        if 'color' in control_dict:
+            # an example: 
+            # base color [ 0.87664568  0.17000981  0.          1.        ] 
+            # alt color [ 0.83450949  0.18503807  0.          1.        ]
+            # those are stored as keys in control_dict['color']
+
+            self.base_color = control_dict['color']['base_color']
+            self.alt_color = control_dict['color']['alt_color']
+        else:
+            self.base_color = None
+            self.alt_color = None
+
     def sample_cross_section_params(self, surface_resolution=256):
         rad_small = uniform(0.65, 0.75)
 
@@ -50,17 +67,21 @@ class FruitFactoryCoconutgreen(FruitFactoryGeneralFruit):
         }
 
     def sample_surface_params(self):
-        bottom_color = np.array((0.282, 0.951, 0.266))
-        bottom_color[0] += np.random.normal(0.0, 0.02)
-        bottom_color[1] += np.random.normal(0.0, 0.05)
-        bottom_color[2] += np.random.normal(0.0, 0.05)
-        bottom_color_rgba = hsv2rgba(bottom_color)
+        if self.base_color is not None:
+            bottom_color = np.array((0.282, 0.951, 0.266))
+            bottom_color[0] += np.random.normal(0.0, 0.02)
+            bottom_color[1] += np.random.normal(0.0, 0.05)
+            bottom_color[2] += np.random.normal(0.0, 0.05)
+            bottom_color_rgba = hsv2rgba(bottom_color)
 
-        basic_color = np.array((0.235, 0.989, 0.413))
-        basic_color[0] += np.random.normal(0.0, 0.025)
-        basic_color[1] += np.random.normal(0.0, 0.05)
-        basic_color[2] += np.random.normal(0.0, 0.05)
-        basic_color_rgba = hsv2rgba(basic_color)
+            basic_color = np.array((0.235, 0.989, 0.413))
+            basic_color[0] += np.random.normal(0.0, 0.025)
+            basic_color[1] += np.random.normal(0.0, 0.05)
+            basic_color[2] += np.random.normal(0.0, 0.05)
+            basic_color_rgba = hsv2rgba(basic_color)
+        else:
+            basic_color_rgba = self.base_color
+            bottom_color_rgba = self.alt_color_rgba
 
         return {
             'surface_name': "coconutgreen_surface",

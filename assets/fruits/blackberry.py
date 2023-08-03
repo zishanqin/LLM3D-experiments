@@ -20,9 +20,26 @@ from placement.factory import AssetFactory
 from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
 class FruitFactoryBlackberry(FruitFactoryGeneralFruit):
-    def __init__(self, factory_seed, scale=1.0, coarse=False):
+    def __init__(self, factory_seed, scale=1.0, coarse=False, control=False, control_dict={}):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
         self.name = 'blackberry'
+        if 'shape' in control_dict:
+            # print(control_dict)
+            self.shape_params = control_dict['shape']
+        else:
+            self.shape_params = None
+
+        if 'color' in control_dict:
+            # an example: 
+            # base color [ 0.87664568  0.17000981  0.          1.        ] 
+            # alt color [ 0.83450949  0.18503807  0.          1.        ]
+            # those are stored as keys in control_dict['color']
+
+            self.base_color = control_dict['color']['base_color']
+            self.alt_color = control_dict['color']['alt_color']
+        else:
+            self.base_color = None
+            self.alt_color = None
 
     def sample_cross_section_params(self, surface_resolution=256):
         return {
@@ -53,6 +70,8 @@ class FruitFactoryBlackberry(FruitFactoryGeneralFruit):
         berry_color[1] += np.random.normal(0.0, 0.05)
         berry_color[2] += np.random.normal(0.0, 0.005)
         berry_color_rgba = hsv2rgba(berry_color)
+        berry_color_rgba = self.base_color
+        # alt_color_rgba = self.alt_color
 
         return {
             'surface_name': "blackberry_surface",

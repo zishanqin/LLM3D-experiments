@@ -20,9 +20,26 @@ from placement.factory import AssetFactory
 from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
 class FruitFactoryPineapple(FruitFactoryGeneralFruit):
-    def __init__(self, factory_seed, scale=1.0, coarse=False):
+    def __init__(self, factory_seed, scale=1.0, coarse=False, control=False, control_dict={}):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
         self.name = 'pineapple'
+        if 'shape' in control_dict:
+            # print(control_dict)
+            self.shape_params = control_dict['shape']
+        else:
+            self.shape_params = None
+
+        if 'color' in control_dict:
+            # an example: 
+            # base color [ 0.87664568  0.17000981  0.          1.        ] 
+            # alt color [ 0.83450949  0.18503807  0.          1.        ]
+            # those are stored as keys in control_dict['color']
+
+            self.base_color = control_dict['color']['base_color']
+            self.alt_color = control_dict['color']['alt_color']
+        else:
+            self.base_color = None
+            self.alt_color = None
 
     def sample_cross_section_params(self, surface_resolution=256):
         return {
@@ -49,29 +66,42 @@ class FruitFactoryPineapple(FruitFactoryGeneralFruit):
         }
 
     def sample_surface_params(self):
-        bottom_color = np.array((0.192, 0.898, 0.095))
-        bottom_color[0] += np.random.normal(0.0, 0.025)
-        bottom_color[1] += np.random.normal(0.0, 0.05)
-        bottom_color[2] += np.random.normal(0.0, 0.05)
-        bottom_color_rgba = hsv2rgba(bottom_color)
+        if self.base_color is None:
+            bottom_color = np.array((0.192, 0.898, 0.095))
+            bottom_color[0] += np.random.normal(0.0, 0.025)
+            bottom_color[1] += np.random.normal(0.0, 0.05)
+            bottom_color[2] += np.random.normal(0.0, 0.05)
+            bottom_color_rgba = hsv2rgba(bottom_color)
 
-        mid_color = np.array((0.05, 0.96, 0.55))
-        mid_color[0] += np.random.normal(0.0, 0.025)
-        mid_color[1] += np.random.normal(0.0, 0.05)
-        mid_color[2] += np.random.normal(0.0, 0.05)
-        mid_color_rgba = hsv2rgba(mid_color)
-        
-        top_color = np.array((0.04, 0.99, 0.45))
-        top_color[0] += np.random.normal(0.0, 0.025)
-        top_color[1] += np.random.normal(0.0, 0.05)
-        top_color[2] += np.random.normal(0.0, 0.05)
-        top_color_rgba = hsv2rgba(top_color)
+            mid_color = np.array((0.05, 0.96, 0.55))
+            mid_color[0] += np.random.normal(0.0, 0.025)
+            mid_color[1] += np.random.normal(0.0, 0.05)
+            mid_color[2] += np.random.normal(0.0, 0.05)
+            mid_color_rgba = hsv2rgba(mid_color)
+            
+            top_color = np.array((0.04, 0.99, 0.45))
+            top_color[0] += np.random.normal(0.0, 0.025)
+            top_color[1] += np.random.normal(0.0, 0.05)
+            top_color[2] += np.random.normal(0.0, 0.05)
+            top_color_rgba = hsv2rgba(top_color)
 
-        center_color = np.array((0.07, 0.63, 0.84))
-        center_color[0] += np.random.normal(0.0, 0.025)
-        center_color[1] += np.random.normal(0.0, 0.05)
-        center_color[2] += np.random.normal(0.0, 0.05)
-        center_color_rgba = hsv2rgba(center_color)
+            center_color = np.array((0.07, 0.63, 0.84))
+            center_color[0] += np.random.normal(0.0, 0.025)
+            center_color[1] += np.random.normal(0.0, 0.05)
+            center_color[2] += np.random.normal(0.0, 0.05)
+            center_color_rgba = hsv2rgba(center_color)
+
+            
+        else:
+            center_color_rgba = self.base_color
+            if 'top' in self.alt_color:
+                top_color_rgba = self.alt_color['top']
+                mid_color_rgba = self.alt_color['mid']
+                bottom_color_rgba = self.alt_color['bottom']
+            else:
+                top_color_rgba = self.alt_color
+                mid_color_rgba = self.alt_color
+                bottom_color_rgba = self.alt_color
 
         cell_distance = uniform(0.18, 0.22)
 

@@ -331,34 +331,37 @@ def test(args,control,control_dict):
 
 
 
-# if 'factory_method' in control_dict:
-#     # Tussock, Grasses, Wheat, Maize, Agave, Banana, Taro, Veratrum
-#     name = control_dict['factory_method']
-#     if name == 'Tussock':
-#         factory_method = TussockMonocotFactory
-#     elif name == 'Grasses':
-#         factory_method = GrassesMonocotFactory
-#     elif name == 'Wheat':
-#         factory_method = WheatMonocotFactory
-#     elif name == 'Maize':
-#         factory_method = MaizeMonocotFactory
-#     elif name == 'Agave':
-#         factory_method = AgaveMonocotFactory
-#     elif name == 'Banana':
-#         factory_method = BananaMonocotFactory
-#     elif name == 'Taro':
-#         factory_method = TaroMonocotFactory
-#     elif name == 'Veratrum':
-#         factory_method = VeratrumMonocotFactory
-
-
-
 if __name__ == '__main__':
     args = make_args()
-    control_dict = {'factory_method':'Wheat'} # TODO: define the control dict here, all test (Test 1, Test 2, Test3) need to be run.  Only run one test each command.
+    # petal
+    # control_dict = {'rad':1, 'petal_color':[1.00, 0.00, 0.00, 1.00]} # TODO: define the control dict here, all test (Test 1, Test 2, Test3) need to be run.  Only run one test each command.
+
+    # fruits
+    # 'shape_func_args': {
+            # 'radius_control_points': [(0.0, 0.0), (0.1227, 0.4281), (0.4705, 0.6625), (0.8886, 0.4156), (1.0, 0.0)]}, 
+            # 'shape_input_args': 
+            # {'Profile Curve': 'noderef-crosssection-Geometry', 
+            # 'noise amount tilt': 0.0, 
+            # 'noise scale pos': 0.5, 
+            # 'noise amount pos': 0.1, 
+            # 'Resolution': 64, 
+            # 'Start': (-0.023311696234844456, 0.05834500761653291, -1.0057789839505809), 
+            # 'End': (0.0, 0.0, 1.0)}, 
+            # 'shape_output_args': {}}
+    control_dict = {'shape': {'shape_input_args': 
+            {'Profile Curve': 'noderef-crosssection-Geometry', 
+            'noise amount tilt': 100.0, 
+            'noise scale pos': 0.5, 
+            'noise amount pos': 0.1, 
+            'Resolution': 64, 
+            'Start': (-0.023311696234844456, 0.05834500761653291, -1.0057789839505809), 
+            'End': (0.0, 0.0, 1.0)}, 
+            'shape_output_args': {}},
+            'color': {'base_color': np.array([0,0,0,1]), 'alt_color': np.array([0,0, 0, 0])}
+            }
 
     # test(args,control=True,control_dict={}) # Test1: test control with empty dict
-    # test(args, control=True, control_dict=control_dict) # Test2: test control with control dict
-    test(args, control=False, control_dict={}) # Test3: test without control, run it multiple times, the result should remain the same.
+    test(args, control=True, control_dict=control_dict) # Test2: test control with control dict
+    # test(args, control=False, control_dict={}) # Test3: test without control, run it multiple times, the result should remain the same.
 
 #  ../blender/blender -noaudio --background --python tools/generate_control_test.py -- -f TreeFactory

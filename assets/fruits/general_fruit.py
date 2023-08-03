@@ -113,10 +113,42 @@ def general_fruit_geometry_nodes(nw: NodeWrangler,
         input_kwargs=output_dict)
 
 class FruitFactoryGeneralFruit(AssetFactory):
-    def __init__(self, factory_seed, scale=1.0, coarse=False):
+    def __init__(self, factory_seed, scale=1.0, coarse=False, control=False, control_dict={}):
         super(FruitFactoryGeneralFruit, self).__init__(factory_seed, coarse=coarse)
 
         self.scale = scale
+
+        # Control: 
+        # shape:  {'shape_name': 'shape_quadratic', 
+        # 'shape_func_args': {
+            # 'radius_control_points': [(0.0, 0.0), (0.1227, 0.4281), (0.4705, 0.6625), (0.8886, 0.4156), (1.0, 0.0)]}, 
+            # 'shape_input_args': 
+            # {'Profile Curve': 'noderef-crosssection-Geometry', 
+            # 'noise amount tilt': 0.0, 
+            # 'noise scale pos': 0.5, 
+            # 'noise amount pos': 0.1, 
+            # 'Resolution': 64, 
+            # 'Start': (-0.023311696234844456, 0.05834500761653291, -1.0057789839505809), 
+            # 'End': (0.0, 0.0, 1.0)}, 
+            # 'shape_output_args': {}}
+        if 'shape' in control_dict:
+            # print(control_dict)
+            self.shape_params = control_dict['shape']
+        else:
+            self.shape_params = None
+
+        if 'color' in control_dict:
+            # an example: 
+            # base color [ 0.87664568  0.17000981  0.          1.        ] 
+            # alt color [ 0.83450949  0.18503807  0.          1.        ]
+            # those are stored as keys in control_dict['color']
+
+            self.base_color = control_dict['color']['base_color']
+            self.alt_color = control_dict['color']['alt_color']
+        else:
+            self.base_color = None
+            self.alt_color = None
+
 
     def sample_cross_section_params(self, surface_resolution=256):
         raise NotImplementedError
@@ -149,8 +181,21 @@ class FruitFactoryGeneralFruit(AssetFactory):
         with FixedSeed(self.factory_seed):
             cross_section_params, shape_params, surface_params, stem_params = self.sample_geo_genome()
 
-        scale_multiplier = surface_params['scale_multiplier']
+        if self.shape_params is not None:
+            for p in self.shape_params:
+                shape_params[p] = self.shape_params[p] 
 
+        # print('color', surface_params['surface_output_args'])
+        # # print('surface', surface_params)
+        # if self.base_color is not None:
+        #     surface_params['surface_output_args']['color1'] = self.base_color
+        #     surface_params['surface_output_args']['color2'] = self.alt_color
+        # print('color', surface_params['surface_output_args']['color1'])
+        # exit()
+
+        scale_multiplier = surface_params['scale_multiplier']
+        # print(shape_params)
+        # exit()
         output_list = []
         output_list.extend(cross_section_params['cross_section_output_args'].keys())
         output_list.extend(shape_params['shape_output_args'].keys())

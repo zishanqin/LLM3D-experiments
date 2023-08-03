@@ -24,9 +24,26 @@ from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
 @gin.register
 class FruitFactoryDurian(FruitFactoryGeneralFruit):
-    def __init__(self, factory_seed, scale=1.0, coarse=False):
+    def __init__(self, factory_seed, scale=1.0, coarse=False, control=False, control_dict={}):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
         self.name = 'durian'
+        if 'shape' in control_dict:
+            # print(control_dict)
+            self.shape_params = control_dict['shape']
+        else:
+            self.shape_params = None
+
+        if 'color' in control_dict:
+            # an example: 
+            # base color [ 0.87664568  0.17000981  0.          1.        ] 
+            # alt color [ 0.83450949  0.18503807  0.          1.        ]
+            # those are stored as keys in control_dict['color']
+
+            self.base_color = control_dict['color']['base_color']
+            self.alt_color = control_dict['color']['alt_color']
+        else:
+            self.base_color = None
+            self.alt_color = None
 
     def sample_cross_section_params(self, surface_resolution=256):
         return {
@@ -53,17 +70,21 @@ class FruitFactoryDurian(FruitFactoryGeneralFruit):
         }
 
     def sample_surface_params(self):
-        base_color = np.array((0.15, 0.74, 0.32))
-        base_color[0] += np.random.normal(0.0, 0.02)
-        base_color[1] += np.random.normal(0.0, 0.05)
-        base_color[2] += np.random.normal(0.0, 0.05)
-        base_color_rgba = hsv2rgba(base_color)
+        if self.base_color is None:
+            base_color = np.array((0.15, 0.74, 0.32))
+            base_color[0] += np.random.normal(0.0, 0.02)
+            base_color[1] += np.random.normal(0.0, 0.05)
+            base_color[2] += np.random.normal(0.0, 0.05)
+            base_color_rgba = hsv2rgba(base_color)
 
-        peak_color = np.array((0.09, 0.87, 0.24))
-        peak_color[0] += np.random.normal(0.0, 0.025)
-        peak_color[1] += np.random.normal(0.0, 0.05)
-        peak_color[2] += np.random.normal(0.0, 0.05)
-        peak_color_rgba = hsv2rgba(peak_color)
+            peak_color = np.array((0.09, 0.87, 0.24))
+            peak_color[0] += np.random.normal(0.0, 0.025)
+            peak_color[1] += np.random.normal(0.0, 0.05)
+            peak_color[2] += np.random.normal(0.0, 0.05)
+            peak_color_rgba = hsv2rgba(peak_color)
+        else:
+            base_color_rgba = self.base_color
+            peak_color_rgba = self.alt_color
 
         return {
             'surface_name': "durian_surface",

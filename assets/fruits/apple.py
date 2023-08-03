@@ -20,9 +20,26 @@ from placement.factory import AssetFactory
 from assets.fruits.general_fruit import FruitFactoryGeneralFruit
 
 class FruitFactoryApple(FruitFactoryGeneralFruit):
-    def __init__(self, factory_seed, scale=1.0, coarse=False):
+    def __init__(self, factory_seed, scale=1.0, coarse=False, control=False, control_dict={}):
         super().__init__(factory_seed, scale=scale, coarse=coarse)
         self.name = 'apple'
+        if 'shape' in control_dict:
+            # print(control_dict)
+            self.shape_params = control_dict['shape']
+        else:
+            self.shape_params = None
+
+        if 'color' in control_dict:
+            # an example: 
+            # base color [ 0.87664568  0.17000981  0.          1.        ] 
+            # alt color [ 0.83450949  0.18503807  0.          1.        ]
+            # those are stored as keys in control_dict['color']
+
+            self.base_color = control_dict['color']['base_color']
+            self.alt_color = control_dict['color']['alt_color']
+        else:
+            self.base_color = None
+            self.alt_color = None
 
     def sample_cross_section_params(self, surface_resolution=256):
         return {
@@ -49,16 +66,24 @@ class FruitFactoryApple(FruitFactoryGeneralFruit):
         }
 
     def sample_surface_params(self):
-        base_color = np.array((uniform(-0.05, 0.1), 0.999, 0.799))
-        base_color[1] += normal(0.0, 0.05)
-        base_color[2] += normal(0.0, 0.05)
-        base_color_rgba = hsv2rgba(base_color)
+        if self.base_color is None:
+            base_color = np.array((uniform(-0.05, 0.1), 0.999, 0.799))
+            base_color[1] += normal(0.0, 0.05)
+            base_color[2] += normal(0.0, 0.05)
+            base_color_rgba = hsv2rgba(base_color)
 
-        alt_color = np.copy(base_color)
-        alt_color[0] += normal(0.05, 0.02)
-        alt_color[1] += normal(0.0, 0.05)
-        alt_color[2] += normal(0.0, 0.05)
-        alt_color_rgba = hsv2rgba(alt_color)
+            alt_color = np.copy(base_color)
+            alt_color[0] += normal(0.05, 0.02)
+            alt_color[1] += normal(0.0, 0.05)
+            alt_color[2] += normal(0.0, 0.05)
+            alt_color_rgba = hsv2rgba(alt_color)
+
+        # print('visualize color ---------')
+        # print(base_color_rgba, alt_color_rgba)
+        else:
+            base_color_rgba = self.base_color
+            alt_color_rgba = self.alt_color
+
 
         return {
             'surface_name': "apple_surface",
