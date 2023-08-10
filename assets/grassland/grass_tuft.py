@@ -13,6 +13,7 @@ from assets.creatures.geometry.curve import Curve
 from util.blender import deep_clone_obj
 
 from surfaces.templates import grass_blade_texture
+from util.math import FixedSeed
 
 from placement.factory import AssetFactory
 

@@ -23,14 +23,20 @@ from assets.utils.tag import tag_object, tag_nodegroup
 class MushroomFactory(AssetFactory):
     max_cluster = 10
 
-    def __init__(self, factory_seed, coarse=False):
+    def __init__(self, factory_seed, coarse=False, control=False, control_dict={}):
         super().__init__(factory_seed, coarse)
         with FixedSeed(factory_seed):
             self.makers = [self.directional_make, self.cluster_make]
             self.maker = np.random.choice(self.makers)
-            self.lowered = uniform(0, 1) < .5
+            if 'maker' in control_dict:
+                if control_dict['maker'] == 'cluster':
+                    self.maker = self.cluster_make
+                else:
+                    self.maker = self.directional_make
+            
+            self.lowered = control_dict.get('lowered', uniform(0, 1) < .5)
             self.factory = MushroomGrowthFactory(factory_seed, coarse)
-            self.tolerant_length = uniform(0, .2)
+            self.tolerant_length = control_dict.get('tolerant_length',uniform(0, .2))
 
     def create_asset(self, i, face_size, **params):
         mushrooms, keypoints = self.build_mushrooms(i, face_size)

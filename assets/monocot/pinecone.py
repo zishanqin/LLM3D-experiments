@@ -33,8 +33,8 @@ class PineconeFactory(MonocotGrowthFactory):
             self.stem_offset = control_dict.get('stem_offset', uniform(.2, .4))
             self.perturb = control_dict.get('perturb', 0)
             self.scale_curve = control_dict.get('scale_curve', [(0, .5), (.5, uniform(.6, 1.)), (1, uniform(.1, .2))])
-            self.bright_color = *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .01), 1
-            self.dark_color = *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .005), 1
+            self.bright_color = control_dict.get('bright_color', *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .01), 1)
+            self.dark_color = control_dict.get('dark_color', *colorsys.hsv_to_rgb(uniform(.02, .06), uniform(.8, 1.), .005), 1)
             self.material = shaderfunc_to_material(self.shader_monocot, self.dark_color, self.bright_color,
                                                    self.use_distance)
 

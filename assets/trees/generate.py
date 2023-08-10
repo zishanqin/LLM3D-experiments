@@ -57,6 +57,8 @@ class GenericTreeFactory(AssetFactory):
         adapt_mesh_method='remesh', 
         decimate_placeholder_levels=0, 
         min_dist=None,
+        control=False, 
+        control_dict={},
         coarse=False
     ):
 
@@ -297,6 +299,7 @@ def make_twig_collection(
     twig_valid_dist=6
 ):
 
+
     logger.debug(f'Starting make_twig_collection({seed=}, {n_leaf=}, {n_twig=}...)')
 
     if season is None:
@@ -307,8 +310,15 @@ def make_twig_collection(
     else:
         child_col = None
 
+
     twig_factory = GenericTreeFactory(seed, twig_params, child_col, trunk_surface=trunk_surface, realize=True)
+
+    # print(twig_factory, n_twig, twig_valid_dist)
+    # exit()
+    n_twig = 2 if n_twig is None else n_twig
+
     col = make_asset_collection(twig_factory, n_twig, verbose=False, distance=twig_valid_dist)
+
 
     if child_col is not None:
         child_col.hide_viewport = False
@@ -321,17 +331,20 @@ class TreeFactory(GenericTreeFactory):
     n_leaf = 10
     n_twig = 2
 
+    
+
     def control(self,control_dict):
+
         # Leaves
         if 'n_leaf' in control_dict:
             # experiments default: 10
             # Leaf count/quantity/number/amount;
             # Primary photosynthetic organs of plants;
             # This number can vary greatly depending on the species, size, and stage of growth
-            n_leaf = control_dict['n_leaf']
+            self.n_leaf = control_dict['n_leaf']
         else:
             # random leaves; don't care about number of leaves
-            n_leaf = np.random.randint(0,100)
+            self.n_leaf = np.random.randint(0,100)
 
         leaf_types = ['leaf', 'leaf_v2', 'leaf_broadleaf', 'leaf_ginko', 'leaf_maple', 'flower', 'berry', None]
         if 'leaf_type' in control_dict:
@@ -346,9 +359,9 @@ class TreeFactory(GenericTreeFactory):
             # berry: green balls (resembling intricate polygons)
             # None: no leaves
             # Leaf types can be determined by seasons
-            leaf_type = control_dict['leaf_type']
+            self.leaf_type = control_dict['leaf_type']
         else:
-            leaf_type = np.random.choice(leaf_types)
+            self.leaf_type = np.random.choice(leaf_types)
 
         if 'fruit_type' in control_dict:
             # apple: big yellow apples;
@@ -358,9 +371,9 @@ class TreeFactory(GenericTreeFactory):
             # starfruit: yellow middle-sized fruit;
             # strawberry: small orange balls;
             # composition_fruit
-            fruit_type = control_dict['fruit_type']
+            self.fruit_type = control_dict['fruit_type']
         else:
-            fruit_type = self.get_fruit_type()
+            self.fruit_type = self.get_fruit_type()
 
         if 'n_twig' in control_dict:
             # experiments default: 3
@@ -370,10 +383,10 @@ class TreeFactory(GenericTreeFactory):
             # They provide support for leaves, flowers, and fruits, allowing them to be exposed to sunlight and air;
             # Also transport water, nutrients, and sugars between the plant's roots and other parts of the plant;
             # They can serve as a site for the formation of new buds, from which new growth can emerge.
-            n_twig = control_dict['n_twig']
+            self.n_twig = control_dict['n_twig']
         else:
             # random twigs; don't care about number of twigs
-            n_twig = np.random.randint(0,10)
+            self.n_twig = np.random.randint(0,10)
 
         if 'season' in control_dict:
             # experiments default: summer
@@ -381,9 +394,11 @@ class TreeFactory(GenericTreeFactory):
             # autumn: yellow leaves;
             # spring: no leaves but with some fruits
             # winter: no leaves, no fruits
-            season = control_dict['season']
+            self.season = control_dict['season']
         else:
-            season = np.random.choice(['summer', 'winter', 'autumn', 'spring'])
+            self.season = np.random.choice(['summer', 'winter', 'autumn', 'spring'])
+
+
         return n_leaf,leaf_type,n_twig,season,fruit_type
 
 
@@ -413,11 +428,18 @@ class TreeFactory(GenericTreeFactory):
 
     def __init__(self, seed, season=None, coarse=False, fruit_chance=0.2,control = False, control_dict={}, **kwargs):
 
-        if(control):
-            n_leaf, leaf_type, n_twig, season, fruit_type = self.control(control_dict)
+
+        if(control_dict !={}):
+            # print('1', self.n_twig)
+            # exit()
+            self.n_leaf, self.leaf_type, self.n_twig, self.season, self.fruit_type = self.control(control_dict)
             (tree_params, twig_params, leaf_params), _ = random_species(season=season)
             trunk_surface = surface.registry('bark')
+            # print('1', self.n_twig)
+            # exit()
         else:
+            # print('2', self.n_twig)
+            # exit()
             with FixedSeed(seed):
                 if season is None:
                     season = np.random.choice(['summer', 'winter', 'autumn', 'spring'])
@@ -426,10 +448,11 @@ class TreeFactory(GenericTreeFactory):
                 (tree_params, twig_params, leaf_params), leaf_type = random_species(season)
 
 
-
                 leaf_type = leaf_type or self.get_leaf_type(season)
                 if not isinstance(leaf_type, list):
                     leaf_type = [leaf_type]
+                
+                self.n_twigs = 2
 
                 trunk_surface = surface.registry('bark')
 
@@ -437,6 +460,11 @@ class TreeFactory(GenericTreeFactory):
                     fruit_type = self.get_fruit_type()
                 else:
                     fruit_type = None
+            # print('2', self.n_twig)
+            # exit()
+        
+
+        
 
         super(TreeFactory, self).__init__(seed, tree_params, child_col=None, trunk_surface=trunk_surface, coarse=coarse, **kwargs)
 
@@ -460,7 +488,8 @@ class BushFactory(GenericTreeFactory):
     n_twig = 3
     max_distance = 50
 
-    def __init__(self, seed, coarse=False, **kwargs):
+    def __init__(self, seed, coarse=False, control=False, control_dict={}, **kwargs):
+        
 
         if tree_params is None:
             with FixedSeed(seed):
@@ -470,7 +499,7 @@ class BushFactory(GenericTreeFactory):
         trunk_surface = surface.registry('bark')
         tree_params, twig_params, leaf_params = treeconfigs.shrub(shrub_shape=shrub_shape)
 
-        super(BushFactory, self).__init__(seed, tree_params, child_col=None, trunk_surface=trunk_surface, coarse=coarse, control=False, control_dict={}, **kwargs)
+        super(BushFactory, self).__init__(seed, tree_params, child_col=None, trunk_surface=trunk_surface, coarse=coarse,  **kwargs)
             
         if 'n_leaf' in control_dict:
             # range = [2, 3, 4]
@@ -486,6 +515,7 @@ class BushFactory(GenericTreeFactory):
             # range = [20, 30, 40, 50, 60, 70]
             assert isinstance(control_dict['max_distance'], int)
             self.max_distance = control_dict['max_distance']
+
 
         with FixedSeed(seed):  
             if 'leaf_type' in control_dict:
@@ -505,6 +535,7 @@ class BushFactory(GenericTreeFactory):
             if use_cached == coarse:
                 logger.warning(f'In {self}, encountered {use_cached=} yet {coarse=}, unexpected since twigs are typically generated only in coarse')
 
+            
             if colname not in bpy.data.collections:
                 self.child_col = make_twig_collection(seed, twig_params, leaf_params, trunk_surface, self.n_leaf, self.n_twig, leaf_type) 
                 self.child_col.name = colname
