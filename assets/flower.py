@@ -520,16 +520,14 @@ class FlowerFactory(AssetFactory):
 
     def __init__(self, factory_seed, rad=0.15, diversity_fac=0.25, control=False, control_dict={}):
         super(FlowerFactory, self).__init__(factory_seed=factory_seed)
-
         diversity_fac = 1
         self.rad = rad
         self.diversity_fac = diversity_fac
+        
         self.seed = factory_seed
         self.pct_inner = 1
-        self.petal_color = np.array(control_dict['petal_color'])
-
-        # self.petal_control = None
-
+        self.petal_color = None
+        
         with FixedSeed(factory_seed):
             # global petal_control
             self.petal_control = {
@@ -555,8 +553,19 @@ class FlowerFactory(AssetFactory):
             self.species_params = self.get_flower_params(self.rad)
             # print('------',self.pct_inner)
             # exit()
-
+        
         self.control(control_dict)
+        # print('after control')
+        # print(self.rad,
+        # self.diversity_fac,
+        
+        # self.seed,
+        # self.pct_inner,
+        # self.petal_color,
+        # self.petal_control,
+        # 'control',
+        # control_dict)
+        self.c_d = control_dict
         
 
     def shader_petal(self, nw):
@@ -615,9 +624,12 @@ class FlowerFactory(AssetFactory):
             input_kwargs={'Surface': principled_bsdf})
 
     def control(self, control_dict):
+
         with FixedSeed(self.seed):
             if 'rad' in control_dict: # control the size of the rad
                 self.rad = control_dict['rad'] # default rad=0.15
+                print('rad', self.rad)
+                print()
             if 'diversity_fac' in control_dict: # the change is quite minor
                 self.diversity_fac = control_dict['diversity_fac'] # default diversity_fac = 0.25
             
@@ -655,10 +667,10 @@ class FlowerFactory(AssetFactory):
                 # to test this, set a large number for pct_inner to keep the flower as open as possible (1 is the maximum)
             else:
                 self.center_control = [
-                {'position': 0.4841, 'color': (0.0127, 0.0075, 0.0026, 1.0)},
-                {'position': 0.8591, 'color': (0.0848, 0.0066, 0.0007, 0)},
-                {'position': 1.0, 'color': (1.0, 0.6228, 0.1069, 1.0)}
-            ]
+                    {'position': 0.4841, 'color': (0.0127, 0.0075, 0.0026, 1.0)},
+                    {'position': 0.8591, 'color': (0.0848, 0.0066, 0.0007, 0)},
+                    {'position': 1.0, 'color': (1.0, 0.6228, 0.1069, 1.0)}
+                ]
                 
 
             # Control the flower opening
@@ -667,6 +679,11 @@ class FlowerFactory(AssetFactory):
                 self.pct_inner = control_dict['open']
             else:
                 self.pct_inner = uniform(0.05, 0.4) 
+
+
+            
+            # if 'base_width' in control_dict:
+                # self.base_width = control_dict.get('base_width', 1)
             # print('------',self.pct_inner)
             # exit()
                 
@@ -675,6 +692,7 @@ class FlowerFactory(AssetFactory):
     # @staticmethod
     def get_flower_params(self, overall_rad=0.05):
         base_width = 2 * np.pi * overall_rad * self.pct_inner / normal(20, 5)
+        
         top_width = overall_rad * np.clip(normal(0.7, 0.3), base_width * 1.2, 100)
 
         min_angle, max_angle = np.deg2rad(np.sort(uniform(-20, 100, 2)))
@@ -696,6 +714,8 @@ class FlowerFactory(AssetFactory):
             input_kwargs={'petal_material': self.petal_material, 'center_material': self.center_material})
         # print('--------')
         inst_params = self.get_flower_params(self.rad * normal(1, 0.05))
+        # print(inst_params)
+        inst_params = self.c_d.get('flower_params', inst_params)
         params = dict_lerp(self.species_params, inst_params, 0.25)
         surface.set_geomod_inputs(mod, params)
 
