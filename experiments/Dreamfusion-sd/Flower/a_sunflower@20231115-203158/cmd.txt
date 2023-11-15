@@ -1,2 +1,0 @@
-python launch.py --config configs/dreamfusion-sd.yaml --train --gpu 0 system.prompt_processor.prompt=a sunflower
-Namespace(config='configs/dreamfusion-sd.yaml', gpu='0', train=True, validate=False, test=False, export=False, gradio=False, verbose=False, typecheck=False)
